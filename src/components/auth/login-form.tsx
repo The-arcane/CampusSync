@@ -84,10 +84,9 @@ export function LoginForm({ role }: { role: Role }) {
       return;
     }
     
-    // After successful login and role verification, redirect to the root page.
-    // The root page will then handle redirecting to the correct dashboard.
-    router.push('/');
-    router.refresh(); // Force a refresh to ensure all states are reset correctly.
+    // After successful login and role verification, refresh the page.
+    // This ensures all server components and hooks re-validate auth state.
+    router.refresh(); 
   }
 
   return (
