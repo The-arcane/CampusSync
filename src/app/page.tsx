@@ -14,13 +14,31 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // If user is logged in, redirect them away from the login page
-    if (!loading && rawUser) {
-      router.replace('/dashboard');
+    if (!loading && rawUser && role) {
+      // Redirect based on role
+      switch (role) {
+        case 'Super Admin':
+          router.replace('/dashboard/super-admin');
+          break;
+        case 'Admin':
+          router.replace('/dashboard/admin');
+          break;
+        case 'Teacher':
+          router.replace('/dashboard/teacher');
+          break;
+        case 'Security/Staff':
+          router.replace('/dashboard/security');
+          break;
+        case 'Parent':
+          router.replace('/dashboard/parent');
+          break;
+        default:
+          router.replace('/dashboard');
+          break;
+      }
     }
-  }, [rawUser, loading, router]);
+  }, [rawUser, loading, router, role]);
   
-  // Render a loading state or nothing while checking auth state
   if(loading || rawUser) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">

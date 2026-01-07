@@ -35,7 +35,7 @@ type NavItem = {
 
 const navItemsByRole: Record<Role, NavItem[]> = {
   'Super Admin': [
-    { href: '/dashboard/admin', icon: ShieldCheck, label: 'Admin Dashboard' },
+    { href: '/dashboard/super-admin', icon: ShieldCheck, label: 'Dashboard' },
     { href: '/dashboard/admin/students', icon: Users, label: 'Students' },
     { href: '/dashboard/admin/staff', icon: UserCheck, label: 'Staff' },
     { href: '/dashboard/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
@@ -70,7 +70,7 @@ const navItemsByRole: Record<Role, NavItem[]> = {
 export function SidebarNav() {
   const { role } = useRole();
   const pathname = usePathname();
-  const currentNavItems = navItemsByRole[role];
+  const currentNavItems = role ? navItemsByRole[role] : [];
   
   // Use a simple logo
   const Logo = () => (
@@ -79,6 +79,16 @@ export function SidebarNav() {
       <span className="font-bold text-lg font-headline text-primary">CampusSync</span>
     </Link>
   );
+
+  if (!role) {
+    return (
+        <div className="flex flex-col h-full">
+         <div className="p-2">
+            <Logo />
+         </div>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -93,7 +103,7 @@ export function SidebarNav() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />

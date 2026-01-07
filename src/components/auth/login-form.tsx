@@ -79,6 +79,8 @@ export function LoginForm() {
     // Redirect based on role
     switch (role) {
         case 'Super Admin':
+            router.push('/dashboard/super-admin');
+            break;
         case 'Admin':
             router.push('/dashboard/admin');
             break;
