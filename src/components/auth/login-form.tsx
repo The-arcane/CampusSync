@@ -68,8 +68,6 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Login Failed",
         description: "Could not retrieve user profile. Please contact support.",
       });
-      // Also sign the user out to be safe
-      await supabase.auth.signOut();
       return;
     }
 
@@ -80,7 +78,8 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Access Denied",
         description: `You do not have permission to access the ${role} portal.`,
       });
-      await supabase.auth.signOut();
+      // Do not sign out here, as it may have been a mis-click.
+      // Let the user try logging into the correct portal.
       return;
     }
     
