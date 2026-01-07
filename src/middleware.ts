@@ -91,7 +91,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   
-  if (path.startsWith('/security') && userRole !== 'security_staff') {
+  if (path.startsWith('/security-staff') && userRole !== 'security_staff') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   

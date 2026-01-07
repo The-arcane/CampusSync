@@ -11,11 +11,11 @@ const avatarUrls = [
 ].filter(Boolean) as string[];
 
 export const users: (Profile & {email: string})[] = [
-  { id: '1', full_name: 'Dr. Evelyn Reed', email: 'evelyn.reed@example.com', role: 'Super Admin', avatarUrl: avatarUrls[0] },
-  { id: '2', full_name: 'Marcus Kane', email: 'marcus.kane@example.com', role: 'Admin', avatarUrl: avatarUrls[1] },
-  { id: '3', full_name: 'Lena Petrova', email: 'lena.petrova@example.com', role: 'Teacher', avatarUrl: avatarUrls[2] },
-  { id: '4', full_name: 'John Smith', email: 'john.smith@example.com', role: 'Security/Staff', avatarUrl: avatarUrls[3] },
-  { id: '5', full_name: 'Sarah Connor', email: 'sarah.connor@example.com', role: 'Parent', avatarUrl: avatarUrls[4] },
+  { id: '1', full_name: 'Dr. Evelyn Reed', email: 'evelyn.reed@example.com', role: 'super_admin', avatarUrl: avatarUrls[0] },
+  { id: '2', full_name: 'Marcus Kane', email: 'marcus.kane@example.com', role: 'admin', avatarUrl: avatarUrls[1] },
+  { id: '3', full_name: 'Lena Petrova', email: 'lena.petrova@example.com', role: 'teacher', avatarUrl: avatarUrls[2] },
+  { id: '4', full_name: 'John Smith', email: 'john.smith@example.com', role: 'security_staff', avatarUrl: avatarUrls[3] },
+  { id: '5', full_name: 'Sarah Connor', email: 'sarah.connor@example.com', role: 'parent', avatarUrl: avatarUrls[4] },
 ];
 
 export const students: Student[] = [

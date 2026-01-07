@@ -57,9 +57,9 @@ const navItemsByRole: Record<Role, NavItem[]> = {
     { href: '/teacher/academics', icon: BookOpen, label: 'Academic Records' },
   ],
   'security_staff': [
-    { href: '/security/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/security/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
-    { href: '/security/reports', icon: BarChart, label: 'Attendance Reports' },
+    { href: '/security-staff/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/security-staff/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
+    { href: '/security-staff/reports', icon: BarChart, label: 'Attendance Reports' },
   ],
   'parent': [
     { href: '/parent/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -80,7 +80,7 @@ export function SidebarNav() {
       case 'super_admin': return '/super-admin/dashboard';
       case 'admin': return '/admin/dashboard';
       case 'teacher': return '/teacher/dashboard';
-      case 'security_staff': return '/security/dashboard';
+      case 'security_staff': return '/security-staff/dashboard';
       case 'parent': return '/parent/dashboard';
       default: return '/';
     }

@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
@@ -7,7 +8,7 @@ import type { Profile } from '@/lib/types';
 
 export default function ManageStaffPage() {
   // Filter for teachers and non-teaching staff
-  const staff = users.filter(u => u.role === 'Teacher' || u.role === 'Security/Staff');
+  const staff = users.filter(u => u.role === 'teacher' || u.role === 'security_staff');
 
   return (
     <div className="space-y-8">

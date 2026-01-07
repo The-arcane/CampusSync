@@ -35,7 +35,7 @@ export default function LoginPage() {
   const { user, loading } = useRole();
   const router = useRouter();
 
-  // If a user is already logged in, the middleware will handle redirecting them away from this page.
+  // If a user is already logged in, the middleware handles redirecting them away from this page.
   // We can show a loading spinner while that happens.
   if (loading || user) {
     return (

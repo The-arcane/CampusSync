@@ -58,7 +58,7 @@ export function LoginForm({ role }: { role: Role }) {
     // Step 2: Verify the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('role')
       .eq('id', authData.user.id)
       .single();
 
@@ -93,7 +93,7 @@ export function LoginForm({ role }: { role: Role }) {
         router.replace('/teacher/dashboard');
         break;
       case 'security_staff':
-        router.replace('/security/dashboard');
+        router.replace('/security-staff/dashboard');
         break;
       case 'parent':
         router.replace('/parent/dashboard');
