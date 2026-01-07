@@ -21,26 +21,34 @@ export async function middleware(req: NextRequest) {
   );
 
   const { data: { session } } = await supabase.auth.getSession();
-  
-  // If user is not logged in and is not on the login page, redirect to login
-  if (!session && !req.nextUrl.pathname.startsWith('/login')) {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // If user is not logged in and is trying to access a protected route, redirect to login
+  if (!user && !req.nextUrl.pathname.startsWith('/login') && req.nextUrl.pathname !== '/') {
     return NextResponse.redirect(new URL('/login', req.url));
   }
   
   // If user is logged in, prevent them from accessing the login page
-  if (session && req.nextUrl.pathname.startsWith('/login')) {
+  if (user && req.nextUrl.pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // If user is not logged in, no further checks are needed
-  if (!session) {
+  // If the route is not a protected portal route, let them pass
+  const isProtectedRoute = ['/super-admin', '/admin', '/teacher', '/security', '/parent'].some(prefix => req.nextUrl.pathname.startsWith(prefix));
+  if (!isProtectedRoute) {
     return res;
   }
+  
+  // If user is not logged in and tries to access a protected route, redirect to login
+  if (!user) {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   if (!profile) {
@@ -81,7 +89,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - api/ (API routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/.*).*)',
   ],
 };
