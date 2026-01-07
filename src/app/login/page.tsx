@@ -5,19 +5,17 @@ import { LoginForm } from '@/components/auth/login-form';
 import { BookOpenCheck } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const { rawUser, loading, role } = useRole();
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    // If a user is already logged in and we know their role, redirect them away from the login page.
     if (!loading && rawUser && role) {
-      setIsRedirecting(true);
-      // User is already logged in, redirect to their dashboard
       switch (role) {
         case 'Super Admin':
           router.replace('/super-admin/dashboard');
@@ -35,34 +33,27 @@ export default function LoginPage() {
           router.replace('/parent/dashboard');
           break;
         default:
-          // Stay on login page if role is unknown, just in case
-          setIsRedirecting(false);
+          // Stay on login page if role is somehow invalid
           break;
       }
     }
   }, [rawUser, loading, router, role]);
   
-  if(loading || isRedirecting) {
-    // Show a loading indicator while checking auth status or redirecting
+  // While checking auth or if user is logged in and redirecting, show a loading screen.
+  if (loading || rawUser) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        {role && (
+        {role ? (
             <p className="text-muted-foreground">Loading {role} Portal...</p>
+        ) : (
+          <p className="text-muted-foreground">Initializing...</p>
         )}
       </div>
-    )
-  }
-  
-  // Don't render the login form if a user is logged in but the redirect hasn't happened yet.
-  if (rawUser) {
-    return (
-       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    );
   }
 
+  // Only show the login form if there is no user and auth check is complete.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
       <div className="w-full max-w-6xl mx-auto">
