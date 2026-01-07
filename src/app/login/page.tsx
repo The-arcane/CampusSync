@@ -34,13 +34,13 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
   const router = useRouter();
 
-  // If the user is already logged in, the middleware will redirect them.
-  // We just show a loading spinner in the meantime.
+  // If the user is already logged in, the middleware will handle redirection.
+  // We just show a loading spinner while waiting for the middleware.
   if (loading || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Redirecting...</p>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }

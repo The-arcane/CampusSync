@@ -58,7 +58,7 @@ export function LoginForm({ role }: { role: Role }) {
     // Step 2: Verify the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('*')
       .eq('id', authData.user.id)
       .single();
 
@@ -78,13 +78,13 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Access Denied",
         description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
+      // Do not sign out, just prevent navigation.
       return;
     }
     
-    // Step 4: Role matches, redirect to the main page.
+    // Step 4: Role matches. Refresh the page to trigger middleware.
     // The middleware will handle the final redirection to the correct dashboard.
-    router.push('/');
-    router.refresh(); // This is crucial to force a re-fetch of server data, including the session in middleware.
+    router.refresh();
   }
 
   return (

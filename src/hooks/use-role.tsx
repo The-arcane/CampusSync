@@ -43,6 +43,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setRoleState(null);
           setRawUser(null);
+          await supabase.auth.signOut();
         }
       } else {
         // No session, clear all user state
