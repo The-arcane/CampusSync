@@ -1,0 +1,256 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a user of the system, with a specific role.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the system.",
+          "enum": [
+            "Super Admin",
+            "Admin",
+            "Teacher",
+            "Security/Staff",
+            "Parent"
+          ]
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's avatar image."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "avatarUrl"
+      ]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Represents a student enrolled in the school.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the student."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the student."
+        },
+        "class": {
+          "type": "string",
+          "description": "The class the student is in."
+        },
+        "admissionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The date the student was admitted."
+        },
+        "parentId": {
+          "type": "string",
+          "description": "The ID of the parent/guardian user."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "class",
+        "admissionDate",
+        "parentId"
+      ]
+    },
+    "Staff": {
+      "title": "Staff",
+      "description": "Represents a staff member, who can be teaching or non-teaching.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the staff member."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the staff member."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the staff member.",
+          "enum": [
+            "Teacher",
+            "Non-Teaching"
+          ]
+        },
+        "joiningDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The date the staff member joined."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "joiningDate"
+      ]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Represents an attendance record for a user (student or staff).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attendance record."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user (student or staff)."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the attendance record."
+        },
+        "entryTime": {
+          "type": "string",
+          "format": "time",
+          "description": "The time of entry."
+        },
+        "exitTime": {
+          "type": "string",
+          "format": "time",
+          "description": "The time of exit (can be null)."
+        },
+        "status": {
+          "type": "string",
+          "description": "The attendance status.",
+          "enum": [
+            "Present",
+            "Late",
+            "Absent"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "entryTime",
+        "status"
+      ]
+    },
+    "Payroll": {
+      "title": "Payroll",
+      "description": "Represents a payroll record for a staff member for a specific month.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payroll record."
+        },
+        "staffId": {
+          "type": "string",
+          "description": "The ID of the staff member."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month for the payroll (e.g., 'YYYY-MM')."
+        },
+        "baseSalary": {
+          "type": "number",
+          "description": "The base salary for the month."
+        },
+        "deductions": {
+          "type": "number",
+          "description": "Total deductions for the month."
+        },
+        "netSalary": {
+          "type": "number",
+          "description": "The final net salary after deductions."
+        },
+        "status": {
+          "type": "string",
+          "description": "The payment status of the payroll.",
+          "enum": [
+            "Paid",
+            "Pending"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "staffId",
+        "month",
+        "baseSalary",
+        "deductions",
+        "netSalary",
+        "status"
+      ]
+    },
+    "AcademicRecord": {
+      "title": "Academic Record",
+      "description": "Represents an academic record for a student in a specific subject.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the academic record."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "The ID of the student."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the record."
+        },
+        "marks": {
+          "type": "number",
+          "description": "The marks obtained by the student."
+        },
+        "examType": {
+          "type": "string",
+          "description": "The type of exam.",
+          "enum": [
+            "Mid-term",
+            "Final"
+          ]
+        },
+        "remarks": {
+          "type": "string",
+          "description": "Any remarks from the teacher."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "subject",
+        "marks",
+        "examType",
+        "remarks"
+      ]
+    }
+  },
+  "auth": {
+    "providers": []
+  }
+}
