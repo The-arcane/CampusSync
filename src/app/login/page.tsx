@@ -1,20 +1,42 @@
-
 'use client';
-import Link from 'next/link';
-import { ShieldCheck, UserCog, Briefcase, User, GraduationCap, BookOpenCheck } from 'lucide-react';
+
+import { useState } from 'react';
+import { ShieldCheck, UserCog, Briefcase, User, GraduationCap, BookOpenCheck, ArrowLeft } from 'lucide-react';
 import type { Role } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LoginForm } from '@/components/auth/login-form';
 
-const roles: { role: Role; icon: React.ElementType; label: string; href: string }[] = [
-  { role: 'super_admin', icon: ShieldCheck, label: 'Super Admin', href: '/super-admin/login' },
-  { role: 'admin', icon: UserCog, label: 'Admin', href: '/admin/login' },
-  { role: 'teacher', icon: Briefcase, label: 'Teacher', href: '/teacher/login' },
-  { role: 'security_staff', icon: User, label: 'Security/Staff', href: '/security/login' },
-  { role: 'parent', icon: GraduationCap, label: 'Parent', href: '/parent/login' },
+const roles: { role: Role; icon: React.ElementType; label: string }[] = [
+  { role: 'super_admin', icon: ShieldCheck, label: 'Super Admin' },
+  { role: 'admin', icon: UserCog, label: 'Admin' },
+  { role: 'teacher', icon: Briefcase, label: 'Teacher' },
+  { role: 'security_staff', icon: User, label: 'Security/Staff' },
+  { role: 'parent', icon: GraduationCap, label: 'Parent' },
 ];
 
 export default function LoginPage() {
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+
+  if (selectedRole) {
+    return (
+        <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
+             <div className="w-full max-w-sm mx-auto relative">
+                <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedRole(null)}
+                    className="absolute -top-12 left-0 flex items-center gap-2"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                </Button>
+                <LoginForm role={selectedRole} />
+            </div>
+        </main>
+    )
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
       <div className="w-full max-w-md mx-auto">
@@ -31,12 +53,15 @@ export default function LoginPage() {
             <Card className="w-full">
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-4">
-                        {roles.map(({ label, href, icon: Icon }) => (
-                            <Button asChild key={href} size="lg" variant="outline">
-                                <Link href={href}>
-                                    <Icon className="mr-2 h-5 w-5" />
-                                    <span>Login as {label}</span>
-                                </Link>
+                        {roles.map(({ role, label, icon: Icon }) => (
+                            <Button 
+                                key={role} 
+                                size="lg" 
+                                variant="outline"
+                                onClick={() => setSelectedRole(role)}
+                            >
+                                <Icon className="mr-2 h-5 w-5" />
+                                <span>Login as {label}</span>
                             </Button>
                         ))}
                     </div>
