@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -13,8 +14,8 @@ import { attendanceData } from '@/lib/mock-data';
 
 export default function SuperAdminDashboardPage() {
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-8 pt-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Students"
           value="+1,204"
