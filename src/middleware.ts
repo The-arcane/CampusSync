@@ -5,8 +5,8 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
     {
       cookies: {
         get: (name: string) => req.cookies.get(name)?.value,
@@ -20,12 +20,13 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
   const { data: { user } } = await supabase.auth.getUser();
 
   // If user is not logged in and is trying to access a protected route, redirect to login
-  if (!user && !req.nextUrl.pathname.startsWith('/login') && req.nextUrl.pathname !== '/') {
-    return NextResponse.redirect(new URL('/login', req.url));
+  if (!user && req.nextUrl.pathname !== '/login') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
   
   // If user is logged in, prevent them from accessing the login page
@@ -33,50 +34,59 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // If the route is not a protected portal route, let them pass
-  const isProtectedRoute = ['/super-admin', '/admin', '/teacher', '/security', '/parent'].some(prefix => req.nextUrl.pathname.startsWith(prefix));
-  if (!isProtectedRoute) {
-    return res;
-  }
-  
-  // If user is not logged in and tries to access a protected route, redirect to login
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', req.url));
-  }
+  // If the user is logged in and on a protected route, check their role
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile) {
+      await supabase.auth.signOut();
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    
+    const path = req.nextUrl.pathname;
+    const userRole = profile.role;
+
+    const roleRedirectMap: { [key: string]: string } = {
+        'Super Admin': '/super-admin/dashboard',
+        'Admin': '/admin/dashboard',
+        'Teacher': '/teacher/dashboard',
+        'Security/Staff': '/security/dashboard',
+        'Parent': '/parent/dashboard',
+    };
+
+    if (path === '/') {
+        const dashboardUrl = roleRedirectMap[userRole] || '/login';
+        return NextResponse.redirect(new URL(dashboardUrl, req.url));
+    }
 
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) {
-     return NextResponse.redirect(new URL('/login', req.url));
-  }
-
-  const path = req.nextUrl.pathname;
-  const userRole = profile.role;
-
-  // Role-based route protection
-  if (path.startsWith('/super-admin') && userRole !== 'Super Admin') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-  
-  if (path.startsWith('/admin') && userRole !== 'Admin' && userRole !== 'Super Admin') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-  
-  if (path.startsWith('/teacher') && userRole !== 'Teacher') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-  
-  if (path.startsWith('/security') && userRole !== 'Security/Staff') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-  
-  if (path.startsWith('/parent') && userRole !== 'Parent') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
+    // Role-based route protection
+    if (path.startsWith('/super-admin') && userRole !== 'Super Admin') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
+    
+    // Allow Super Admin to access Admin routes
+    if (path.startsWith('/admin') && userRole !== 'Admin' && userRole !== 'Super Admin') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
+    
+    if (path.startsWith('/teacher') && userRole !== 'Teacher') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
+    
+    if (path.startsWith('/security') && userRole !== 'Security/Staff') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
+    
+    if (path.startsWith('/parent') && userRole !== 'Parent') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
   }
 
   return res;
@@ -90,7 +100,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api/ (API routes)
+     * - unauthorized (unauthorized page)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/.*).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/.*|unauthorized).*)',
   ],
 };
