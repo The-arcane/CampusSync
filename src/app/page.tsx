@@ -36,7 +36,7 @@ export default function Home() {
           router.replace('/login'); // Fallback if role is unknown
           break;
       }
-    } else {
+    } else if (!rawUser) {
       // If no user is logged in, redirect to the login page
       router.replace('/login');
     }

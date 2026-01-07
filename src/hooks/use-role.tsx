@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Role, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
@@ -22,6 +23,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<(Profile & { email?: string }) | null>(null);
   const [rawUser, setRawUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserAndProfile = async (sessionUser: User) => {
@@ -33,48 +35,64 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         .single();
       
       if (profile) {
-        setUser({ ...profile, email: sessionUser.email });
-        setRoleState(profile.role);
+        const fullUser = { ...profile, email: sessionUser.email };
+        setUser(fullUser);
+        
+        // Use the role from the just-fetched profile for immediate consistency
+        const fetchedRole = profile.role;
+        setRoleState(fetchedRole);
+        return fetchedRole;
       }
+      return null;
     };
-
-    const handleInitialLoad = async () => {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchUserAndProfile(session.user);
-      }
-      setLoading(false);
-    };
-
-    handleInitialLoad();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true);
       if (session?.user) {
-        // Only re-fetch profile if the user ID is different to avoid loops
-        if (session.user.id !== rawUser?.id) {
-          setLoading(true);
+        if(session.user.id !== rawUser?.id) {
           await fetchUserAndProfile(session.user);
-          setLoading(false);
         }
       } else {
         setRawUser(null);
         setUser(null);
         setRoleState(null);
       }
+      setLoading(false);
     });
+    
+    // Initial load
+    (async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await fetchUserAndProfile(session.user);
+      }
+      setLoading(false);
+    })();
+
 
     return () => {
       subscription?.unsubscribe();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on mount
+  }, []);
 
   const setRole = (newRole: Role) => {
-    setRoleState(newRole);
+    if (user && user.role !== newRole) {
+        // This logic is for role switching from the user nav, not initial login
+        const roles = user.role.split(', ') as Role[];
+        if (roles.includes(newRole)) {
+            setRoleState(newRole);
+        }
+    } else {
+        setRoleState(newRole);
+    }
   };
   
-  const availableRoles: Role[] = ["Super Admin", "Admin", "Teacher", "Security/Staff", "Parent"];
+  const availableRoles: Role[] = useMemo(() => {
+    // In a real app, this might come from the user's profile if they can have multiple roles
+    return ["Super Admin", "Admin", "Teacher", "Security/Staff", "Parent"];
+  }, []);
 
   const value = useMemo(() => ({ role, user, rawUser, setRole, availableRoles, loading }), [role, user, rawUser, availableRoles, loading]);
 

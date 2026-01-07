@@ -21,21 +21,42 @@ const roleIcons: Record<Role, React.ElementType> = {
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { rawUser, loading } = useRole();
+  const { rawUser, loading, role } = useRole();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<Role>('Super Admin');
 
   useEffect(() => {
-    // If the user is already logged in, redirect them to the home page,
-    // which will then handle routing them to the correct dashboard.
-    if (!loading && rawUser) {
-      router.replace('/');
+    if (loading) {
+      return;
     }
-  }, [rawUser, loading, router]);
+    // If the user is already logged in, redirect them away from the login page
+    if (rawUser && role) {
+      switch (role) {
+        case 'Super Admin':
+          router.replace('/super-admin/dashboard');
+          break;
+        case 'Admin':
+          router.replace('/admin/dashboard');
+          break;
+        case 'Teacher':
+          router.replace('/teacher/dashboard');
+          break;
+        case 'Security/Staff':
+          router.replace('/security/dashboard');
+          break;
+        case 'Parent':
+          router.replace('/parent/dashboard');
+          break;
+        default:
+          router.replace('/'); // Fallback to the main router page
+          break;
+      }
+    }
+  }, [rawUser, loading, role, router]);
 
   // While checking auth state, or if the user is already logged in and we are redirecting,
   // show a loading indicator.
-  if (loading || rawUser) {
+  if (loading || (rawUser && role)) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
