@@ -9,8 +9,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { BookOpenCheck } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/use-role';
 
 const roleIcons: Record<Role, React.ElementType> = {
@@ -33,10 +31,9 @@ export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
   const { user, loading } = useRole();
-  const router = useRouter();
-
-  // If a user is already logged in, the middleware handles redirecting them away from this page.
-  // We can show a loading spinner while that happens.
+  
+  // The middleware now handles all redirection logic for logged-in users.
+  // This page can simply show a loading state if the auth state isn't clear yet.
   if (loading || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">

@@ -25,15 +25,15 @@ export async function middleware(req: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
+  
   const path = req.nextUrl.pathname;
 
   // If user is not logged in, and not on the login/unauthorized page, redirect to login.
   if (!session) {
-    if (path === '/login' || path === '/unauthorized') {
-      return res;
-    }
-    return NextResponse.redirect(new URL('/login', req.url));
+      if (path === '/login' || path === '/unauthorized') {
+          return res;
+      }
+      return NextResponse.redirect(new URL('/login', req.url));
   }
   
   // If user is logged in, fetch profile.
@@ -51,28 +51,22 @@ export async function middleware(req: NextRequest) {
   
   const userRole = profile.role as Role;
 
+  const roleRedirectMap: { [key in Role]: string } = {
+    'super_admin': '/super-admin/dashboard',
+    'admin': '/admin/dashboard',
+    'teacher': '/teacher/dashboard',
+    'security_staff': '/security/dashboard',
+    'parent': '/parent/dashboard',
+  };
+
   // If a logged-in user tries to access the login page, redirect them to their dashboard
   if (path === '/login') {
-     const roleRedirectMap: { [key in Role]: string } = {
-      'super_admin': '/super-admin/dashboard',
-      'admin': '/admin/dashboard',
-      'teacher': '/teacher/dashboard',
-      'security_staff': '/security/dashboard',
-      'parent': '/parent/dashboard',
-    };
     const dashboardUrl = roleRedirectMap[userRole] || '/login';
     return NextResponse.redirect(new URL(dashboardUrl, req.url));
   }
 
   // If on the root path, redirect to role-specific dashboard.
   if (path === '/') {
-    const roleRedirectMap: { [key in Role]: string } = {
-      'super_admin': '/super-admin/dashboard',
-      'admin': '/admin/dashboard',
-      'teacher': '/teacher/dashboard',
-      'security_staff': '/security/dashboard',
-      'parent': '/parent/dashboard',
-    };
     const dashboardUrl = roleRedirectMap[userRole] || '/login';
     return NextResponse.redirect(new URL(dashboardUrl, req.url));
   }
@@ -91,7 +85,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   
-  if (path.startsWith('/security-staff') && userRole !== 'security_staff') {
+  // The route is /security, not /security-staff
+  if (path.startsWith('/security') && userRole !== 'security_staff') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   

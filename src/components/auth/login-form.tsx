@@ -78,28 +78,29 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Access Denied",
         description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
+      await supabase.auth.signOut();
       return;
     }
     
     // Step 4: Role matches. Redirect to the correct dashboard.
     switch (profile.role) {
-      case 'super_admin':
-        router.replace('/super-admin/dashboard');
-        break;
-      case 'admin':
-        router.replace('/admin/dashboard');
-        break;
-      case 'teacher':
-        router.replace('/teacher/dashboard');
-        break;
-      case 'security_staff':
-        router.replace('/security-staff/dashboard');
-        break;
-      case 'parent':
-        router.replace('/parent/dashboard');
-        break;
-      default:
-        router.replace('/login');
+        case 'super_admin':
+            router.replace('/super-admin/dashboard');
+            break;
+        case 'admin':
+            router.replace('/admin/dashboard');
+            break;
+        case 'teacher':
+            router.replace('/teacher/dashboard');
+            break;
+        case 'security_staff':
+            router.replace('/security/dashboard');
+            break;
+        case 'parent':
+            router.replace('/parent/dashboard');
+            break;
+        default:
+            router.replace('/login');
     }
   }
 
