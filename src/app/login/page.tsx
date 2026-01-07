@@ -2,14 +2,14 @@
 'use client';
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
-import { BookOpenCheck, ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
+import { ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import { BookOpenCheck } from 'lucide-react';
 
 const roleIcons: Record<Role, React.ElementType> = {
   'super_admin': ShieldCheck,
@@ -29,26 +29,12 @@ const roleLabels: Record<Role, string> = {
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { user, loading, isRedirecting } = useRole();
-  const router = useRouter();
+  const { loading, user } = useRole();
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
 
-  useEffect(() => {
-    if (!loading && user) {
-      const roleRedirectMap: { [key in Role]: string } = {
-        'super_admin': '/super-admin/dashboard',
-        'admin': '/admin/dashboard',
-        'teacher': '/teacher/dashboard',
-        'security_staff': '/security/dashboard',
-        'parent': '/parent/dashboard',
-      };
-      const dashboardUrl = roleRedirectMap[user.role] || '/login';
-      router.replace(dashboardUrl);
-    }
-  }, [user, loading, router]);
-
-
-  if (loading || isRedirecting || user) {
+  // If loading, or if the user is already logged in, show a loading spinner.
+  // The middleware will handle the actual redirection.
+  if (loading || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />

@@ -22,27 +22,27 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
   const path = req.nextUrl.pathname;
   
   // If user is not logged in and is trying to access a protected route, redirect to login
-  if (!user && path !== '/login' && path !== '/unauthorized') {
+  if (!session && !path.startsWith('/login') && !path.startsWith('/unauthorized')) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
   
   // If user is logged in, prevent them from accessing the login page
-  if (user && path.startsWith('/login')) {
+  if (session && path.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', req.url));
   }
 
   // If the user is logged in, check their role for protected routes
-  if (user) {
+  if (session) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', session.user.id)
       .single();
 
     // If profile doesn't exist, sign out and redirect to login
@@ -80,7 +80,7 @@ export async function middleware(req: NextRequest) {
     }
     
     if (path.startsWith('/teacher') && userRole !== 'teacher') {
-      return NextResponse.redirect(new URL('/unauthorized', req.url));
+      return NextResponse.redirect(new URL('/unauthorized', 'src/middleware.ts'));
     }
     
     if (path.startsWith('/security') && userRole !== 'security_staff') {
