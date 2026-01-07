@@ -81,8 +81,10 @@ export function LoginForm({ role }: { role: Role }) {
       return;
     }
     
-    // Step 4: Role matches, redirect to the main page, which will be handled by middleware.
-    router.refresh();
+    // Step 4: Role matches, redirect to the main page.
+    // The middleware will handle the final redirection to the correct dashboard.
+    router.push('/');
+    router.refresh(); // This is crucial to force a re-fetch of server data, including the session in middleware.
   }
 
   return (

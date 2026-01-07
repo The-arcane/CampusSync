@@ -22,30 +22,34 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const path = req.nextUrl.pathname;
-  
-  // If user is not logged in and is trying to access a protected route, redirect to login
-  if (!session && !path.startsWith('/login') && !path.startsWith('/unauthorized')) {
+
+  // If user is not logged in and is trying to access a protected route (or the root),
+  // redirect to login.
+  if (!session && !path.startsWith('/login') && path !== '/unauthorized') {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
   
-  // If user is logged in, prevent them from accessing the login page
+  // If user is logged in, prevent them from accessing the login page.
   if (session && path.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // If the user is logged in, check their role for protected routes
+  // If the user is logged in, check their role for protected routes.
   if (session) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)
       .single();
-
-    // If profile doesn't exist, sign out and redirect to login
+    
+    // If profile doesn't exist, sign out and redirect to login.
     if (!profile) {
       await supabase.auth.signOut();
       const url = req.nextUrl.clone();
@@ -55,7 +59,7 @@ export async function middleware(req: NextRequest) {
     
     const userRole = profile.role as Role;
 
-    // If on the root path, redirect to role-specific dashboard
+    // If on the root path, redirect to role-specific dashboard.
     if (path === '/') {
       const roleRedirectMap: { [key in Role]: string } = {
         'super_admin': '/super-admin/dashboard',
@@ -68,19 +72,18 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL(dashboardUrl, req.url));
     }
 
-
-    // Role-based route protection
+    // Role-based route protection.
     if (path.startsWith('/super-admin') && userRole !== 'super_admin') {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
     
-    // Allow Super Admin to access Admin routes
+    // Allow Super Admin to access Admin routes.
     if (path.startsWith('/admin') && userRole !== 'admin' && userRole !== 'super_admin') {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
     
     if (path.startsWith('/teacher') && userRole !== 'teacher') {
-      return NextResponse.redirect(new URL('/unauthorized', 'src/middleware.ts'));
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
     
     if (path.startsWith('/security') && userRole !== 'security_staff') {
@@ -103,9 +106,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api/ (API routes)
-     * - unauthorized (unauthorized page)
      * - auth/ (Supabase auth callback)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/.*|unauthorized|auth/.*).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/.*|auth/.*).*)',
   ],
 };

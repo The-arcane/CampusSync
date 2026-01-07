@@ -10,7 +10,6 @@ type RoleContextType = {
   role: Role | null;
   user: (Profile & { email?: string }) | null;
   rawUser: User | null;
-  availableRoles: Role[];
   loading: boolean;
 };
 
@@ -28,6 +27,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       
       if (session?.user) {
         setRawUser(session.user);
+        // Fetch profile from the database
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -45,6 +45,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           setRawUser(null);
         }
       } else {
+        // No session, clear all user state
         setUser(null);
         setRoleState(null);
         setRawUser(null);
@@ -52,11 +53,12 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         handleAuthStateChange(session);
     });
 
-    // Initial load check
+    // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
         handleAuthStateChange(session);
     });
@@ -66,11 +68,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     };
   }, []);
   
-  const availableRoles: Role[] = useMemo(() => {
-    return ["super_admin", "admin", "teacher", "security_staff", "parent"];
-  }, []);
-
-  const value = useMemo(() => ({ role, user, rawUser, availableRoles, loading }), [role, user, rawUser, availableRoles, loading]);
+  const value = useMemo(() => ({ role, user, rawUser, loading }), [role, user, rawUser, loading]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }

@@ -5,11 +5,12 @@ import { LoginForm } from '@/components/auth/login-form';
 import { ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { BookOpenCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const roleIcons: Record<Role, React.ElementType> = {
   'super_admin': ShieldCheck,
@@ -31,14 +32,15 @@ export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const { loading, user } = useRole();
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
+  const router = useRouter();
 
-  // If loading, or if the user is already logged in, show a loading spinner.
-  // The middleware will handle the actual redirection.
+  // If the user is already logged in, the middleware will redirect them.
+  // We just show a loading spinner in the meantime.
   if (loading || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Initializing...</p>
+        <p className="text-muted-foreground">Redirecting...</p>
       </div>
     );
   }
