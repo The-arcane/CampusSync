@@ -10,28 +10,28 @@ const avatarUrls = [
   placeholderImages.placeholderImages.find(p => p.id === "avatar-5")?.imageUrl,
 ].filter(Boolean) as string[];
 
-export const users: Profile[] = [
-  { id: '1', fullName: 'Dr. Evelyn Reed', email: 'evelyn.reed@example.com', role: 'Super Admin', avatarUrl: avatarUrls[0] },
-  { id: '2', fullName: 'Marcus Kane', email: 'marcus.kane@example.com', role: 'Admin', avatarUrl: avatarUrls[1] },
-  { id: '3', fullName: 'Lena Petrova', email: 'lena.petrova@example.com', role: 'Teacher', avatarUrl: avatarUrls[2] },
-  { id: '4', fullName: 'John Smith', email: 'john.smith@example.com', role: 'Security/Staff', avatarUrl: avatarUrls[3] },
-  { id: '5', fullName: 'Sarah Connor', email: 'sarah.connor@example.com', role: 'Parent', avatarUrl: avatarUrls[4] },
+export const users: (Profile & {email: string})[] = [
+  { id: '1', full_name: 'Dr. Evelyn Reed', email: 'evelyn.reed@example.com', role: 'Super Admin', avatarUrl: avatarUrls[0] },
+  { id: '2', full_name: 'Marcus Kane', email: 'marcus.kane@example.com', role: 'Admin', avatarUrl: avatarUrls[1] },
+  { id: '3', full_name: 'Lena Petrova', email: 'lena.petrova@example.com', role: 'Teacher', avatarUrl: avatarUrls[2] },
+  { id: '4', full_name: 'John Smith', email: 'john.smith@example.com', role: 'Security/Staff', avatarUrl: avatarUrls[3] },
+  { id: '5', full_name: 'Sarah Connor', email: 'sarah.connor@example.com', role: 'Parent', avatarUrl: avatarUrls[4] },
 ];
 
 export const students: Student[] = [
-  { id: 'S001', fullName: 'Alice Johnson', classId: '10A', admissionNo: 'A001', parentId: '5' },
-  { id: 'S002', fullName: 'Bob Williams', classId: '10A', admissionNo: 'A002', parentId: 'P002' },
-  { id: 'S003', fullName: 'Charlie Brown', classId: '11B', admissionNo: 'A003', parentId: 'P003' },
-  { id: 'S004', fullName: 'Diana Miller', classId: '9C', admissionNo: 'A004', parentId: 'P004' },
-  { id: 'S005', fullName: 'Ethan Davis', classId: '12A', admissionNo: 'A005', parentId: 'P005' },
+  { id: 'S001', full_name: 'Alice Johnson', class_id: '10A', admission_no: 'A001', parent_id: '5' },
+  { id: 'S002', full_name: 'Bob Williams', class_id: '10A', admission_no: 'A002', parent_id: 'P002' },
+  { id: 'S003', full_name: 'Charlie Brown', class_id: '11B', admission_no: 'A003', parent_id: 'P003' },
+  { id: 'S004', full_name: 'Diana Miller', class_id: '9C', admission_no: 'A004', parent_id: 'P004' },
+  { id: 'S005', full_name: 'Ethan Davis', class_id: '12A', admission_no: 'A005', parent_id: 'P005' },
 ];
 
 export const teachers: Teacher[] = [
-  { id: '3', salaryPerDay: 500, joiningDate: '2020-08-20' },
+  { id: '3', salary_per_day: 500, joining_date: '2020-08-20' },
 ];
 
 export const staff: Staff[] = [
-    { id: '4', designation: 'Security Head', salaryPerDay: 300, joiningDate: '2019-02-11' },
+    { id: '4', designation: 'Security Head', salary_per_day: 300, joining_date: '2019-02-11' },
 ];
 
 export const recentSignups = [

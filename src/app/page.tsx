@@ -1,10 +1,33 @@
+
+'use client';
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { BookOpenCheck } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
+import { useRole } from '@/hooks/use-role';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
+  const { rawUser, loading } = useRole();
+  const router = useRouter();
+
+  useEffect(() => {
+    // If user is logged in, redirect them away from the login page
+    if (!loading && rawUser) {
+      router.replace('/dashboard');
+    }
+  }, [rawUser, loading, router]);
+  
+  // Render a loading state or nothing while checking auth state
+  if(loading || rawUser) {
+    return (
+       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">

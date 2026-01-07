@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import type { Role } from "@/lib/types";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -36,16 +38,64 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Simulate API call
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (authError || !authData.user) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: authError?.message || "Invalid credentials. Please try again.",
+      });
+      return;
+    }
+    
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileError || !profile) {
+       toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Could not retrieve user profile. Please contact support.",
+      });
+       await supabase.auth.signOut(); // Log the user out if profile is missing
+       return;
+    }
+
     toast({
       title: "Login Successful",
       description: "Redirecting to your dashboard...",
     });
-    // In a real app, you'd handle auth here and then redirect.
-    // We will redirect to the admin dashboard for demo purposes.
-    router.push("/dashboard/admin");
+
+    const role = profile.role as Role;
+
+    // Redirect based on role
+    switch (role) {
+        case 'Super Admin':
+        case 'Admin':
+            router.push('/dashboard/admin');
+            break;
+        case 'Teacher':
+            router.push('/dashboard/teacher');
+            break;
+        case 'Security/Staff':
+            router.push('/dashboard/security');
+            break;
+        case 'Parent':
+            router.push('/dashboard/parent');
+            break;
+        default:
+            // Fallback to a generic page or the login page
+            router.push('/');
+            break;
+    }
   }
 
   return (
@@ -82,9 +132,13 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" size="lg">
-              <LogIn />
-              Sign In
+            <Button type="submit" className="w-full" size="lg" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Signing In...' : (
+                <>
+                  <LogIn />
+                  Sign In
+                </>
+              )}
             </Button>
           </form>
         </Form>

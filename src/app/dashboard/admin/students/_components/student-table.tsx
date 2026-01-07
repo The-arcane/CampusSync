@@ -61,7 +61,7 @@ const columns: ColumnDef<Student>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "admissionNo",
+    accessorKey: "admission_no",
     header: ({ column }) => {
         return (
           <Button
@@ -73,10 +73,10 @@ const columns: ColumnDef<Student>[] = [
           </Button>
         )
       },
-    cell: ({ row }) => <div className="pl-4">{row.getValue("admissionNo")}</div>,
+    cell: ({ row }) => <div className="pl-4">{row.getValue("admission_no")}</div>,
   },
   {
-    accessorKey: "fullName",
+    accessorKey: "full_name",
      header: ({ column }) => {
         return (
           <Button
@@ -88,12 +88,12 @@ const columns: ColumnDef<Student>[] = [
           </Button>
         )
       },
-    cell: ({ row }) => <div className="pl-4">{row.getValue("fullName")}</div>,
+    cell: ({ row }) => <div className="pl-4">{row.getValue("full_name")}</div>,
   },
   {
-    accessorKey: "classId",
+    accessorKey: "class_id",
     header: "Class",
-    cell: ({ row }) => <div>{row.getValue("classId")}</div>,
+    cell: ({ row }) => <div>{row.getValue("class_id")}</div>,
   },
   {
     id: "actions",
@@ -159,9 +159,9 @@ export function StudentTable({ data }: { data: Student[] }) {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("full_name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("fullName")?.setFilterValue(event.target.value)
+            table.getColumn("full_name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -185,7 +185,7 @@ export function StudentTable({ data }: { data: Student[] }) {
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {column.id === 'classId' ? 'Class' : column.id}
+                    {column.id.replace('_', ' ')}
                   </DropdownMenuCheckboxItem>
                 );
               })}
