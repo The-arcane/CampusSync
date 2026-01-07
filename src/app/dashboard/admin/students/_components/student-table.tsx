@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -63,13 +62,33 @@ const columns: ColumnDef<Student>[] = [
   },
   {
     accessorKey: "admissionNo",
-    header: "Admission No.",
-    cell: ({ row }) => <div>{row.getValue("admissionNo")}</div>,
+    header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Admission No.
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    cell: ({ row }) => <div className="pl-4">{row.getValue("admissionNo")}</div>,
   },
   {
     accessorKey: "fullName",
-    header: "Name",
-    cell: ({ row }) => <div>{row.getValue("fullName")}</div>,
+     header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    cell: ({ row }) => <div className="pl-4">{row.getValue("fullName")}</div>,
   },
   {
     accessorKey: "classId",
@@ -83,25 +102,28 @@ const columns: ColumnDef<Student>[] = [
       const student = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(student.id)}
-            >
-              Copy student ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Edit record</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="text-right">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(student.id)}
+                >
+                Copy student ID
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>View details</DropdownMenuItem>
+                <DropdownMenuItem>Edit record</DropdownMenuItem>
+                 <DropdownMenuItem className="text-destructive">Delete record</DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       );
     },
   },
@@ -163,7 +185,7 @@ export function StudentTable({ data }: { data: Student[] }) {
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {column.id}
+                    {column.id === 'classId' ? 'Class' : column.id}
                   </DropdownMenuCheckboxItem>
                 );
               })}

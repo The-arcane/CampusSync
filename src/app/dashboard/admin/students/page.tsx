@@ -18,11 +18,7 @@ export default function ManageStudentsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Student List</CardTitle>
-          <CardDescription>A list of all students currently enrolled.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className='pt-6'>
           <StudentTable data={students} />
         </CardContent>
       </Card>
