@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { BookOpenCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useRole } from '@/hooks/use-role';
 
 const roleIcons: Record<Role, React.ElementType> = {
   'super_admin': ShieldCheck,
@@ -31,20 +32,19 @@ const roleLabels: Record<Role, string> = {
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
+  const { user, loading } = useRole();
   const router = useRouter();
 
-  // Redirect if a user is already logged in. The middleware doesn't run on this page.
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // If there's a session, redirect to the root,
-        // and the middleware will handle redirection to the correct dashboard.
-        router.replace('/');
-      }
-    };
-    checkSession();
-  }, [router]);
+  // If a user is already logged in, the middleware will handle redirecting them away from this page.
+  // We can show a loading spinner while that happens.
+  if (loading || user) {
+    return (
+       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">

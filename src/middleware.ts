@@ -28,8 +28,11 @@ export async function middleware(req: NextRequest) {
 
   const path = req.nextUrl.pathname;
 
-  // If user is not logged in, redirect to login.
+  // If user is not logged in, and not on the login/unauthorized page, redirect to login.
   if (!session) {
+    if (path === '/login' || path === '/unauthorized') {
+      return res;
+    }
     return NextResponse.redirect(new URL('/login', req.url));
   }
   
@@ -47,6 +50,19 @@ export async function middleware(req: NextRequest) {
   }
   
   const userRole = profile.role as Role;
+
+  // If a logged-in user tries to access the login page, redirect them to their dashboard
+  if (path === '/login') {
+     const roleRedirectMap: { [key in Role]: string } = {
+      'super_admin': '/super-admin/dashboard',
+      'admin': '/admin/dashboard',
+      'teacher': '/teacher/dashboard',
+      'security_staff': '/security/dashboard',
+      'parent': '/parent/dashboard',
+    };
+    const dashboardUrl = roleRedirectMap[userRole] || '/login';
+    return NextResponse.redirect(new URL(dashboardUrl, req.url));
+  }
 
   // If on the root path, redirect to role-specific dashboard.
   if (path === '/') {
@@ -95,9 +111,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - api/ (API routes)
      * - auth/ (Supabase auth callback)
-     * - login (the login page)
-     * - unauthorized (the unauthorized page)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/.*|auth/.*|login|unauthorized).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/.*|auth/.*).*)',
   ],
 };
