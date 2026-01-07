@@ -18,22 +18,22 @@ export default function Home() {
       // Redirect based on role
       switch (role) {
         case 'Super Admin':
-          router.replace('/dashboard/super-admin');
+          router.replace('/super-admin/dashboard');
           break;
         case 'Admin':
-          router.replace('/dashboard/admin');
+          router.replace('/admin/dashboard');
           break;
         case 'Teacher':
-          router.replace('/dashboard/teacher');
+          router.replace('/teacher/dashboard');
           break;
         case 'Security/Staff':
-          router.replace('/dashboard/security');
+          router.replace('/security/dashboard');
           break;
         case 'Parent':
-          router.replace('/dashboard/parent');
+          router.replace('/parent/dashboard');
           break;
         default:
-          router.replace('/dashboard');
+          router.replace('/'); // Fallback to login
           break;
       }
     }

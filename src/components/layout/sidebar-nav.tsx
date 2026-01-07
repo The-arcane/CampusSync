@@ -35,35 +35,35 @@ type NavItem = {
 
 const navItemsByRole: Record<Role, NavItem[]> = {
   'Super Admin': [
-    { href: '/dashboard/super-admin', icon: ShieldCheck, label: 'Dashboard' },
-    { href: '/dashboard/admin/students', icon: Users, label: 'Students' },
-    { href: '/dashboard/admin/staff', icon: UserCheck, label: 'Staff' },
-    { href: '/dashboard/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
-    { href: '/dashboard/admin/payroll', icon: Wallet, label: 'Payroll' },
-    { href: '/dashboard/admin/settings', icon: Settings, label: 'System Settings' },
+    { href: '/super-admin/dashboard', icon: ShieldCheck, label: 'Dashboard' },
+    { href: '/super-admin/students', icon: Users, label: 'Students' },
+    { href: '/super-admin/staff', icon: UserCheck, label: 'Staff' },
+    { href: '/super-admin/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/super-admin/payroll', icon: Wallet, label: 'Payroll' },
+    { href: '/super-admin/settings', icon: Settings, label: 'System Settings' },
   ],
   'Admin': [
-    { href: '/dashboard/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/dashboard/admin/students', icon: Users, label: 'Students' },
-    { href: '/dashboard/admin/staff', icon: UserCheck, label: 'Staff' },
-    { href: '/dashboard/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/admin/students', icon: Users, label: 'Students' },
+    { href: '/admin/staff', icon: UserCheck, label: 'Staff' },
+    { href: '/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
   ],
   'Teacher': [
-    { href: '/dashboard/teacher', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/dashboard/teacher/my-classes', icon: School, label: 'My Classes' },
-    { href: '/dashboard/teacher/attendance', icon: CalendarCheck, label: 'Take Attendance' },
-    { href: '/dashboard/teacher/academics', icon: BookOpen, label: 'Academic Records' },
+    { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/teacher/my-classes', icon: School, label: 'My Classes' },
+    { href: '/teacher/attendance', icon: CalendarCheck, label: 'Take Attendance' },
+    { href: '/teacher/academics', icon: BookOpen, label: 'Academic Records' },
   ],
   'Security/Staff': [
-    { href: '/dashboard/security', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/dashboard/security/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
-    { href: '/dashboard/security/reports', icon: BarChart, label: 'Attendance Reports' },
+    { href: '/security/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/security/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
+    { href: '/security/reports', icon: BarChart, label: 'Attendance Reports' },
   ],
   'Parent': [
-    { href: '/dashboard/parent', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/dashboard/parent/child-profile', icon: User, label: 'Child Profile' },
-    { href: '/dashboard/parent/academics', icon: BookOpen, label: 'Academics' },
-    { href: '/dashboard/parent/communication', icon: HeartHandshake, label: 'Teacher Communication' },
+    { href: '/parent/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/parent/child-profile', icon: User, label: 'Child Profile' },
+    { href: '/parent/academics', icon: BookOpen, label: 'Academics' },
+    { href: '/parent/communication', icon: HeartHandshake, label: 'Teacher Communication' },
   ],
 };
 
@@ -72,9 +72,20 @@ export function SidebarNav() {
   const pathname = usePathname();
   const currentNavItems = role ? navItemsByRole[role] : [];
   
-  // Use a simple logo
+  const getDashboardHome = () => {
+    if (!role) return '/';
+    switch (role) {
+      case 'Super Admin': return '/super-admin/dashboard';
+      case 'Admin': return '/admin/dashboard';
+      case 'Teacher': return '/teacher/dashboard';
+      case 'Security/Staff': return '/security/dashboard';
+      case 'Parent': return '/parent/dashboard';
+      default: return '/';
+    }
+  }
+
   const Logo = () => (
-    <Link href="/dashboard" className="flex items-center gap-2 px-2">
+    <Link href={getDashboardHome()} className="flex items-center gap-2 px-2">
       <BookOpenCheck className="h-7 w-7 text-primary" />
       <span className="font-bold text-lg font-headline text-primary">CampusSync</span>
     </Link>

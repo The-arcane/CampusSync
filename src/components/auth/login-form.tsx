@@ -79,19 +79,19 @@ export function LoginForm() {
     // Redirect based on role
     switch (role) {
         case 'Super Admin':
-            router.push('/dashboard/super-admin');
+            router.push('/super-admin/dashboard');
             break;
         case 'Admin':
-            router.push('/dashboard/admin');
+            router.push('/admin/dashboard');
             break;
         case 'Teacher':
-            router.push('/dashboard/teacher');
+            router.push('/teacher/dashboard');
             break;
         case 'Security/Staff':
-            router.push('/dashboard/security');
+            router.push('/security/dashboard');
             break;
         case 'Parent':
-            router.push('/dashboard/parent');
+            router.push('/parent/dashboard');
             break;
         default:
             // Fallback to a generic page or the login page
