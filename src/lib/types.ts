@@ -1,52 +1,106 @@
+
 export type Role = "Super Admin" | "Admin" | "Teacher" | "Security/Staff" | "Parent";
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
+export type Profile = {
+  id: string; // Corresponds to auth.users(id)
+  fullName: string;
   role: Role;
+  phone?: string;
   avatarUrl: string;
+  email: string;
 };
 
 export type Student = {
-  id: string;
-  name: string;
-  class: string;
-  admissionDate: string;
-  parentId: string;
+  id: string; // UUID
+  admissionNo: string;
+  fullName: string;
+  classId?: string; // UUID
+  parentId?: string; // UUID, references a profile
+  qrCode?: string;
+};
+
+export type Parent = {
+  id: string; // UUID, references a profile
+  address?: string;
+};
+
+export type Teacher = {
+  id: string; // UUID, references a profile
+  salaryPerDay: number;
+  joiningDate: string; // Date
 };
 
 export type Staff = {
-  id: string;
+  id: string; // UUID, references a profile
+  designation?: string;
+  salaryPerDay: number;
+  joiningDate: string; // Date
+};
+
+export type Class = {
+  id: string; // UUID
+  className: string;
+  section?: string;
+};
+
+export type Subject = {
+  id: string; // UUID
   name: string;
-  role: "Teacher" | "Non-Teaching";
-  joiningDate: string;
+  classId?: string; // UUID
+  teacherId?: string; // UUID, references a profile
 };
 
-export type AttendanceRecord = {
-  id: string;
-  userId: string; // Can be student or staff ID
-  date: string;
-  entryTime: string;
-  exitTime: string | null;
-  status: "Present" | "Late" | "Absent";
+export type AttendanceLog = {
+  id: string; // UUID
+  userId?: string; // UUID
+  studentId?: string; // UUID
+  role?: Role;
+  date: string; // Date
+  checkIn?: string; // Time
+  checkOut?: string; // Time
+  isLate: boolean;
 };
 
-export type Payroll = {
-  id: string;
-  staffId: string;
-  month: string;
-  baseSalary: number;
+export type LeaveRequest = {
+  id: string; // UUID
+  userId?: string; // UUID
+  leaveDate: string; // Date
+  leaveType: 'emergency' | 'sunday' | 'monday';
+  approved: boolean;
+};
+
+export type PayrollRule = {
+  id: string; // UUID
+  late4DaysHalfDay: boolean;
+  late8DaysFullDay: boolean;
+  mondayLeaveDoubleDeduction: boolean;
+  allowedEmergencyLeaves: number;
+};
+
+export type SalaryRecord = {
+  id: string; // UUID
+  userId?: string; // UUID
+  month: number;
+  year: number;
+  totalWorkingDays: number;
+  payableDays: number;
+  totalSalary: number;
   deductions: number;
-  netSalary: number;
-  status: "Paid" | "Pending";
+  finalSalary: number;
 };
 
-export type AcademicRecord = {
-  id: string;
-  studentId: string;
-  subject: string;
+export type ExamResult = {
+  id: string; // UUID
+  studentId?: string; // UUID
+  subjectId?: string; // UUID
   marks: number;
-  examType: "Mid-term" | "Final";
-  remarks: string;
+  examName?: string;
+};
+
+export type Fee = {
+  id: string; // UUID
+  studentId?: string; // UUID
+  amount: number;
+  status: 'paid' | 'pending';
+  dueDate?: string; // Date
 };

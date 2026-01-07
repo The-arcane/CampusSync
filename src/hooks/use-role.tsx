@@ -1,12 +1,13 @@
+
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, ReactNode } from 'react';
-import type { Role, User } from '@/lib/types';
+import type { Role, Profile } from '@/lib/types';
 import { users } from '@/lib/mock-data';
 
 type RoleContextType = {
   role: Role;
-  user: User;
+  user: Profile;
   setRole: (role: Role) => void;
   availableRoles: Role[];
 };

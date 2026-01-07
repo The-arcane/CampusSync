@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -61,29 +62,19 @@ const columns: ColumnDef<Student>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => <div>{row.getValue("name")}</div>,
+    accessorKey: "admissionNo",
+    header: "Admission No.",
+    cell: ({ row }) => <div>{row.getValue("admissionNo")}</div>,
   },
   {
-    accessorKey: "class",
-    header: "Class",
-    cell: ({ row }) => <div>{row.getValue("class")}</div>,
+    accessorKey: "fullName",
+    header: "Name",
+    cell: ({ row }) => <div>{row.getValue("fullName")}</div>,
   },
-    {
-    accessorKey: "admissionDate",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Admission Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div>{row.getValue("admissionDate")}</div>,
+  {
+    accessorKey: "classId",
+    header: "Class",
+    cell: ({ row }) => <div>{row.getValue("classId")}</div>,
   },
   {
     id: "actions",
@@ -146,9 +137,9 @@ export function StudentTable({ data }: { data: Student[] }) {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("fullName")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
