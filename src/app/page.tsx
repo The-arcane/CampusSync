@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const { rawUser, loading, role } = useRole();
+  const { role, loading } = useRole();
   const router = useRouter();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export default function Home() {
       return; // Wait until auth state is determined
     }
 
-    if (rawUser && role) {
+    if (role) {
       // If user is logged in, redirect to their specific dashboard
       switch (role) {
         case 'Super Admin':
@@ -36,11 +36,11 @@ export default function Home() {
           router.replace('/login'); // Fallback if role is unknown
           break;
       }
-    } else if (!rawUser) {
+    } else {
       // If no user is logged in, redirect to the login page
       router.replace('/login');
     }
-  }, [rawUser, loading, router, role]);
+  }, [loading, router, role]);
   
   // Display a full-page loading indicator while the logic runs
   return (

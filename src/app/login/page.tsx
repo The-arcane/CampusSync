@@ -5,8 +5,7 @@ import { LoginForm } from '@/components/auth/login-form';
 import { BookOpenCheck, ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
@@ -21,42 +20,11 @@ const roleIcons: Record<Role, React.ElementType> = {
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { rawUser, loading, role } = useRole();
-  const router = useRouter();
+  const { loading } = useRole();
   const [selectedRole, setSelectedRole] = useState<Role>('Super Admin');
 
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-    // If the user is already logged in, redirect them away from the login page
-    if (rawUser && role) {
-      switch (role) {
-        case 'Super Admin':
-          router.replace('/super-admin/dashboard');
-          break;
-        case 'Admin':
-          router.replace('/admin/dashboard');
-          break;
-        case 'Teacher':
-          router.replace('/teacher/dashboard');
-          break;
-        case 'Security/Staff':
-          router.replace('/security/dashboard');
-          break;
-        case 'Parent':
-          router.replace('/parent/dashboard');
-          break;
-        default:
-          router.replace('/'); // Fallback to the main router page
-          break;
-      }
-    }
-  }, [rawUser, loading, role, router]);
 
-  // While checking auth state, or if the user is already logged in and we are redirecting,
-  // show a loading indicator.
-  if (loading || (rawUser && role)) {
+  if (loading) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -65,7 +33,6 @@ export default function LoginPage() {
     );
   }
 
-  // Only show the login form if there is no user and the auth check is complete.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
       <div className="w-full max-w-6xl mx-auto">

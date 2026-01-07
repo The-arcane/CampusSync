@@ -11,11 +11,9 @@ import {
 } from '@/components/ui/sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute role="Parent">
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <Sidebar>
@@ -33,6 +31,5 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </SidebarInset>
         </div>
       </SidebarProvider>
-    </ProtectedRoute>
   );
 }

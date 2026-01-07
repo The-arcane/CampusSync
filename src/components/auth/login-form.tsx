@@ -58,7 +58,7 @@ export function LoginForm({ role }: { role: Role }) {
     // Step 2: Verify the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('role')
       .eq('id', authData.user.id)
       .single();
 
@@ -71,20 +71,18 @@ export function LoginForm({ role }: { role: Role }) {
       return;
     }
 
-    // Step 3: Check if the fetched role matches the selected role
+    // Step 3: Check if the fetched role matches the selected role for portal access
     if (profile.role !== role) {
       toast({
         variant: "destructive",
         title: "Access Denied",
         description: `You do not have permission to access the ${role} portal.`,
       });
-      // Do not sign out here, as it may have been a mis-click.
-      // Let the user try logging into the correct portal.
       return;
     }
     
-    // After successful login and role verification, refresh the page.
-    // This ensures all server components and hooks re-validate auth state.
+    // Step 4: Role matches, redirect to the main page, which will handle routing to the correct dashboard.
+    router.push('/');
     router.refresh(); 
   }
 

@@ -9,22 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRole } from "@/hooks/use-role";
-import { LogOut, Settings, User as UserIcon, Check } from "lucide-react";
+import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
-  const { user, role, setRole, availableRoles, loading } = useRole();
+  const { user, loading } = useRole();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -70,22 +66,6 @@ export function UserNav() {
             Settings
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            Switch Role
-          </DropdownMenuSubTrigger>
-          <DropdownMenuPortal>
-            <DropdownMenuSubContent>
-              {availableRoles.map((r) => (
-                <DropdownMenuItem key={r} onClick={() => setRole(r)}>
-                   {role === r && <Check className="mr-2 h-4 w-4" />}
-                   {r}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
-          </DropdownMenuPortal>
-        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut />
