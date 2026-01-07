@@ -5,8 +5,8 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
   const supabase = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
     {
       cookies: {
         get: (name: string) => req.cookies.get(name)?.value,
@@ -21,20 +21,21 @@ export async function middleware(req: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
+  const path = req.nextUrl.pathname;
+  
   // If user is not logged in and is trying to access a protected route, redirect to login
-  if (!user && req.nextUrl.pathname !== '/login') {
+  if (!user && path !== '/login' && path !== '/unauthorized') {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
   
   // If user is logged in, prevent them from accessing the login page
-  if (user && req.nextUrl.pathname.startsWith('/login')) {
+  if (user && path.startsWith('/login')) {
       return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // If the user is logged in and on a protected route, check their role
+  // If the user is logged in, check their role for protected routes
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -42,6 +43,7 @@ export async function middleware(req: NextRequest) {
       .eq('id', user.id)
       .single();
 
+    // If profile doesn't exist, sign out and redirect to login
     if (!profile) {
       await supabase.auth.signOut();
       const url = req.nextUrl.clone();
@@ -49,20 +51,19 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
     
-    const path = req.nextUrl.pathname;
     const userRole = profile.role;
 
-    const roleRedirectMap: { [key: string]: string } = {
+    // If on the root path, redirect to role-specific dashboard
+    if (path === '/') {
+      const roleRedirectMap: { [key: string]: string } = {
         'Super Admin': '/super-admin/dashboard',
         'Admin': '/admin/dashboard',
         'Teacher': '/teacher/dashboard',
         'Security/Staff': '/security/dashboard',
         'Parent': '/parent/dashboard',
-    };
-
-    if (path === '/') {
-        const dashboardUrl = roleRedirectMap[userRole] || '/login';
-        return NextResponse.redirect(new URL(dashboardUrl, req.url));
+      };
+      const dashboardUrl = roleRedirectMap[userRole] || '/login';
+      return NextResponse.redirect(new URL(dashboardUrl, req.url));
     }
 
 
@@ -101,7 +102,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - api/ (API routes)
      * - unauthorized (unauthorized page)
+     * - auth/ (Supabase auth callback)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/.*|unauthorized).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/.*|unauthorized|auth/.*).*)',
   ],
 };
