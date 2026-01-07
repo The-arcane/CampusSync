@@ -1,23 +1,28 @@
--- inserts a row into public.profiles
+-- Drop the existing trigger and function to ensure a clean re-creation.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user;
+
+-- Create the function to insert a new user into the public.profiles table.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  insert into public.profiles (id, full_name, role, avatar_url)
-  values (
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (
     new.id,
-    new.raw_user_meta_data->>'full_name',
-    (new.raw_user_meta_data->>'role')::user_role,
-    new.raw_user_meta_data->>'avatar_url'
+    COALESCE(new.raw_user_meta_data->>'full_name', 'New User'),
+    CASE
+      WHEN new.raw_user_meta_data->>'role' IS NULL THEN 'parent'::user_role
+      ELSE (new.raw_user_meta_data->>'role')::user_role
+    END
   );
-  return new;
-end;
+  RETURN new;
+END;
 $$;
 
--- trigger the function every time a user is created
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+-- Create the trigger to call the function after a new user is created in auth.users.
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
