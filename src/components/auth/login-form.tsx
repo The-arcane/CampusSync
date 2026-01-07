@@ -58,7 +58,7 @@ export function LoginForm({ role }: { role: Role }) {
     // Step 2: Verify the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('*')
       .eq('id', authData.user.id)
       .single();
 
@@ -87,6 +87,7 @@ export function LoginForm({ role }: { role: Role }) {
     // After successful login and role verification, redirect to the root page.
     // The root page will then handle redirecting to the correct dashboard.
     router.push('/');
+    router.refresh(); // Force a refresh to ensure all states are reset correctly.
   }
 
   return (
