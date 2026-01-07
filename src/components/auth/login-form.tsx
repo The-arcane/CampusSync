@@ -27,6 +27,14 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+const roleRedirectMap: { [key in Role]: string } = {
+  'super_admin': '/super-admin/dashboard',
+  'admin': '/admin/dashboard',
+  'teacher': '/teacher/dashboard',
+  'security_staff': '/security/dashboard',
+  'parent': '/parent/dashboard',
+};
+
 export function LoginForm({ role }: { role: Role }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -58,7 +66,7 @@ export function LoginForm({ role }: { role: Role }) {
     // Step 2: Verify the user's role from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('role')
       .eq('id', authData.user.id)
       .single();
 
@@ -78,13 +86,14 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Access Denied",
         description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
-      // Do not sign out, just prevent navigation.
+      // Sign out the user if they logged in but tried to access the wrong portal
+      await supabase.auth.signOut();
       return;
     }
     
-    // Step 4: Role matches. Refresh the page to trigger middleware.
-    // The middleware will handle the final redirection to the correct dashboard.
-    router.refresh();
+    // Step 4: Role matches. Redirect to the correct dashboard.
+    const redirectUrl = roleRedirectMap[profile.role as Role];
+    router.replace(redirectUrl);
   }
 
   return (

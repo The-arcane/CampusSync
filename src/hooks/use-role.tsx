@@ -22,52 +22,50 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const handleAuthStateChange = async (session: Session | null) => {
-      setLoading(true);
-      
-      if (session?.user) {
-        setRawUser(session.user);
-        // Fetch profile from the database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          const fullUser = { ...profile, email: session.user.email };
-          setUser(fullUser);
-          setRoleState(profile.role);
-        } else {
-          // Profile not found, clear local state
-          setUser(null);
-          setRoleState(null);
-          setRawUser(null);
-          await supabase.auth.signOut();
-        }
-      } else {
-        // No session, clear all user state
-        setUser(null);
-        setRoleState(null);
-        setRawUser(null);
-      }
-      setLoading(false);
-    };
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        handleAuthStateChange(session);
+    // Initially, check the session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthStateChange(session);
     });
 
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        handleAuthStateChange(session);
+    // Then, listen for any auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthStateChange(session);
     });
 
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
+
+  const handleAuthStateChange = async (session: Session | null) => {
+    setLoading(true);
+    if (session?.user) {
+      setRawUser(session.user);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        const fullUser = { ...profile, email: session.user.email };
+        setUser(fullUser);
+        setRoleState(profile.role);
+      } else {
+        // If profile is not found, it's a broken state. Clear everything.
+        await supabase.auth.signOut();
+        setUser(null);
+        setRoleState(null);
+        setRawUser(null);
+      }
+    } else {
+      // No session, clear all user state
+      setUser(null);
+      setRoleState(null);
+      setRawUser(null);
+    }
+    setLoading(false);
+  };
   
   const value = useMemo(() => ({ role, user, rawUser, loading }), [role, user, rawUser, loading]);
 

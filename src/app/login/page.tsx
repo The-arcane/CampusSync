@@ -4,13 +4,13 @@ import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useRole } from '@/hooks/use-role';
 import { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { BookOpenCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 const roleIcons: Record<Role, React.ElementType> = {
   'super_admin': ShieldCheck,
@@ -30,20 +30,21 @@ const roleLabels: Record<Role, string> = {
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { loading, user } = useRole();
   const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
   const router = useRouter();
 
-  // If the user is already logged in, the middleware will handle redirection.
-  // We just show a loading spinner while waiting for the middleware.
-  if (loading || user) {
-    return (
-       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  // Redirect if a user is already logged in. The middleware doesn't run on this page.
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // If there's a session, redirect to the root,
+        // and the middleware will handle redirection to the correct dashboard.
+        router.replace('/');
+      }
+    };
+    checkSession();
+  }, [router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">

@@ -1,8 +1,9 @@
 
-'use client';
-
-// The middleware handles all redirection logic.
-// This page just needs to show a loading state while the initial auth check completes.
+// This is the root page. The middleware handles all redirection logic.
+// If a user lands here, the middleware will redirect them to either
+// the login page or their role-specific dashboard.
+// This page component can be empty or show a generic loading state,
+// but it will likely never be seen by the end-user.
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
