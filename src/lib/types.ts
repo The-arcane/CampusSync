@@ -1,5 +1,6 @@
 
-export type Role = "Super Admin" | "Admin" | "Teacher" | "Security/Staff" | "Parent";
+
+export type Role = "super_admin" | "admin" | "teacher" | "security_staff" | "parent";
 
 export type Profile = {
   id: string; // Corresponds to auth.users(id)

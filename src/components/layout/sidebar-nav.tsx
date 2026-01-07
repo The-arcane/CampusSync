@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -35,7 +36,7 @@ type NavItem = {
 };
 
 const navItemsByRole: Record<Role, NavItem[]> = {
-  'Super Admin': [
+  'super_admin': [
     { href: '/super-admin/dashboard', icon: ShieldCheck, label: 'Dashboard' },
     { href: '/super-admin/students', icon: Users, label: 'Students' },
     { href: '/super-admin/staff', icon: UserCheck, label: 'Staff' },
@@ -43,24 +44,24 @@ const navItemsByRole: Record<Role, NavItem[]> = {
     { href: '/super-admin/payroll', icon: Wallet, label: 'Payroll' },
     { href: '/super-admin/settings', icon: Settings, label: 'System Settings' },
   ],
-  'Admin': [
+  'admin': [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/students', icon: Users, label: 'Students' },
     { href: '/admin/staff', icon: UserCheck, label: 'Staff' },
     { href: '/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
   ],
-  'Teacher': [
+  'teacher': [
     { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/teacher/my-classes', icon: School, label: 'My Classes' },
     { href: '/teacher/attendance', icon: CalendarCheck, label: 'Take Attendance' },
     { href: '/teacher/academics', icon: BookOpen, label: 'Academic Records' },
   ],
-  'Security/Staff': [
+  'security_staff': [
     { href: '/security/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/security/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
     { href: '/security/reports', icon: BarChart, label: 'Attendance Reports' },
   ],
-  'Parent': [
+  'parent': [
     { href: '/parent/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/parent/child-profile', icon: User, label: 'Child Profile' },
     { href: '/parent/academics', icon: BookOpen, label: 'Academics' },
@@ -76,11 +77,11 @@ export function SidebarNav() {
   const getDashboardHome = () => {
     if (!role) return '/';
     switch (role) {
-      case 'Super Admin': return '/super-admin/dashboard';
-      case 'Admin': return '/admin/dashboard';
-      case 'Teacher': return '/teacher/dashboard';
-      case 'Security/Staff': return '/security/dashboard';
-      case 'Parent': return '/parent/dashboard';
+      case 'super_admin': return '/super-admin/dashboard';
+      case 'admin': return '/admin/dashboard';
+      case 'teacher': return '/teacher/dashboard';
+      case 'security_staff': return '/security/dashboard';
+      case 'parent': return '/parent/dashboard';
       default: return '/';
     }
   }

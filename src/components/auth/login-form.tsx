@@ -76,21 +76,20 @@ export function LoginForm({ role }: { role: Role }) {
       toast({
         variant: "destructive",
         title: "Access Denied",
-        description: `You do not have permission to access the ${role} portal.`,
+        description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
       return;
     }
     
-    // Step 4: Role matches, redirect to the main page, which will handle routing to the correct dashboard.
-    router.push('/');
-    router.refresh(); 
+    // Step 4: Role matches, redirect to the main page, which will be handled by middleware.
+    router.refresh();
   }
 
   return (
     <>
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">
-          Login as <span className="text-primary">{role}</span>
+        <CardTitle className="font-headline text-2xl capitalize">
+          Login as <span className="text-primary">{role.replace(/_/g, ' ')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

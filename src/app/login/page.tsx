@@ -5,26 +5,50 @@ import { LoginForm } from '@/components/auth/login-form';
 import { BookOpenCheck, ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 
 const roleIcons: Record<Role, React.ElementType> = {
-  'Super Admin': ShieldCheck,
-  'Admin': UserCog,
-  'Teacher': Briefcase,
-  'Security/Staff': User,
-  'Parent': GraduationCap,
+  'super_admin': ShieldCheck,
+  'admin': UserCog,
+  'teacher': Briefcase,
+  'security_staff': User,
+  'parent': GraduationCap,
+};
+
+const roleLabels: Record<Role, string> = {
+  'super_admin': 'Super Admin',
+  'admin': 'Admin',
+  'teacher': 'Teacher',
+  'security_staff': 'Security/Staff',
+  'parent': 'Parent',
 };
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { loading } = useRole();
-  const [selectedRole, setSelectedRole] = useState<Role>('Super Admin');
+  const { user, loading, isRedirecting } = useRole();
+  const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
+
+  useEffect(() => {
+    if (!loading && user) {
+      const roleRedirectMap: { [key in Role]: string } = {
+        'super_admin': '/super-admin/dashboard',
+        'admin': '/admin/dashboard',
+        'teacher': '/teacher/dashboard',
+        'security_staff': '/security/dashboard',
+        'parent': '/parent/dashboard',
+      };
+      const dashboardUrl = roleRedirectMap[user.role] || '/login';
+      router.replace(dashboardUrl);
+    }
+  }, [user, loading, router]);
 
 
-  if (loading) {
+  if (loading || isRedirecting || user) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -56,7 +80,7 @@ export default function LoginPage() {
                        return (
                          <TabsTrigger key={role} value={role} className="flex-col h-14 md:h-16 gap-1.5 text-xs md:text-sm">
                             <Icon className="h-4 w-4 md:h-5 md:w-5"/>
-                            <span className="hidden md:inline">{role.replace('/', '/ ')}</span>
+                            <span className="hidden md:inline">{roleLabels[role]}</span>
                          </TabsTrigger>
                        )
                     })}

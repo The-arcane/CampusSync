@@ -2,9 +2,10 @@
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Role, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 type RoleContextType = {
   role: Role | null;
@@ -12,6 +13,7 @@ type RoleContextType = {
   rawUser: User | null;
   availableRoles: Role[];
   loading: boolean;
+  isRedirecting: boolean;
 };
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -21,44 +23,66 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<(Profile & { email?: string }) | null>(null);
   const [rawUser, setRawUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchUserAndProfile = async (sessionUser: User) => {
-      setRawUser(sessionUser);
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', sessionUser.id)
-        .single();
-      
-      if (profile) {
-        const fullUser = { ...profile, email: sessionUser.email };
-        setUser(fullUser);
-        setRoleState(profile.role);
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const handleAuthStateChange = async (session: Session | null) => {
       setLoading(true);
+      setIsRedirecting(true); // Start redirecting
+      
       if (session?.user) {
-         await fetchUserAndProfile(session.user);
+        setRawUser(session.user);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          const fullUser = { ...profile, email: session.user.email };
+          setUser(fullUser);
+          setRoleState(profile.role);
+          
+          const roleRedirectMap: { [key in Role]: string } = {
+            'super_admin': '/super-admin/dashboard',
+            'admin': '/admin/dashboard',
+            'teacher': '/teacher/dashboard',
+            'security_staff': '/security/dashboard',
+            'parent': '/parent/dashboard',
+          };
+          const dashboardUrl = roleRedirectMap[profile.role] || '/login';
+          router.replace(dashboardUrl);
+        } else {
+          // Profile not found, sign out
+          await supabase.auth.signOut();
+          setUser(null);
+          setRoleState(null);
+          setRawUser(null);
+          router.replace('/login');
+        }
       } else {
-        setRawUser(null);
         setUser(null);
         setRoleState(null);
+        setRawUser(null);
+        router.replace('/login');
       }
-      setLoading(false);
-    });
-    
-    // Initial load
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchUserAndProfile(session.user);
-      }
-      setLoading(false);
-    })();
 
+      setLoading(false);
+      setIsRedirecting(false); // End redirecting
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        handleAuthStateChange(session);
+    });
+
+    // Initial load check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+            setLoading(false);
+            setIsRedirecting(false);
+        }
+    });
 
     return () => {
       subscription?.unsubscribe();
@@ -67,10 +91,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   }, []);
   
   const availableRoles: Role[] = useMemo(() => {
-    return ["Super Admin", "Admin", "Teacher", "Security/Staff", "Parent"];
+    return ["super_admin", "admin", "teacher", "security_staff", "parent"];
   }, []);
 
-  const value = useMemo(() => ({ role, user, rawUser, availableRoles, loading }), [role, user, rawUser, availableRoles, loading]);
+  const value = useMemo(() => ({ role, user, rawUser, availableRoles, loading, isRedirecting }), [role, user, rawUser, availableRoles, loading, isRedirecting]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }
