@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -53,51 +54,9 @@ export function LoginForm() {
       return;
     }
     
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (profileError || !profile) {
-       toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Could not retrieve user profile. Please contact support.",
-      });
-       await supabase.auth.signOut(); // Log the user out if profile is missing
-       return;
-    }
-
-    toast({
-      title: "Login Successful",
-      description: "Redirecting to your dashboard...",
-    });
-
-    const role = profile.role as Role;
-
-    // Redirect based on role
-    switch (role) {
-        case 'Super Admin':
-            router.push('/super-admin/dashboard');
-            break;
-        case 'Admin':
-            router.push('/admin/dashboard');
-            break;
-        case 'Teacher':
-            router.push('/teacher/dashboard');
-            break;
-        case 'Security/Staff':
-            router.push('/security/dashboard');
-            break;
-        case 'Parent':
-            router.push('/parent/dashboard');
-            break;
-        default:
-            // Fallback to a generic page or the login page
-            router.push('/');
-            break;
-    }
+    // After successful login, redirect to the root page.
+    // The root page will then handle redirecting to the correct dashboard.
+    router.push('/');
   }
 
   return (

@@ -10,50 +10,29 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { rawUser, loading, role } = useRole();
+  const { rawUser, loading } = useRole();
   const router = useRouter();
 
   useEffect(() => {
-    // If a user is already logged in and we know their role, redirect them away from the login page.
-    if (!loading && rawUser && role) {
-      switch (role) {
-        case 'Super Admin':
-          router.replace('/super-admin/dashboard');
-          break;
-        case 'Admin':
-          router.replace('/admin/dashboard');
-          break;
-        case 'Teacher':
-          router.replace('/teacher/dashboard');
-          break;
-        case 'Security/Staff':
-          router.replace('/security/dashboard');
-          break;
-        case 'Parent':
-          router.replace('/parent/dashboard');
-          break;
-        default:
-          // Stay on login page if role is somehow invalid
-          break;
-      }
+    // If the user is already logged in, redirect them to the home page,
+    // which will then handle routing them to the correct dashboard.
+    if (!loading && rawUser) {
+      router.replace('/');
     }
-  }, [rawUser, loading, router, role]);
+  }, [rawUser, loading, router]);
   
-  // While checking auth or if user is logged in and redirecting, show a loading screen.
+  // While checking auth state, or if the user is already logged in and we are redirecting,
+  // show a loading indicator.
   if (loading || rawUser) {
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        {role ? (
-            <p className="text-muted-foreground">Loading {role} Portal...</p>
-        ) : (
-          <p className="text-muted-foreground">Initializing...</p>
-        )}
+        <p className="text-muted-foreground">Initializing...</p>
       </div>
     );
   }
 
-  // Only show the login form if there is no user and auth check is complete.
+  // Only show the login form if there is no user and the auth check is complete.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
       <div className="w-full max-w-6xl mx-auto">
