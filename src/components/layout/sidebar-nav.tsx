@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   School,
   User,
-  HeartHandshake
+  HeartHandshake,
+  BookOpenCheck
 } from 'lucide-react';
 import { useRole } from '@/hooks/use-role';
 import type { Role } from '@/lib/types';
