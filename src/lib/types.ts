@@ -6,8 +6,8 @@ export type Profile = {
   full_name: string;
   role: Role;
   phone?: string;
-  avatarUrl?: string; // Should be fetched from storage or a different column
-  email?: string; // from auth.users
+  avatarUrl?: string; 
+  email?: string; 
 };
 
 export type Student = {

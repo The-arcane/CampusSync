@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function AdminSettingsPage() {
+export default function SuperAdminSettingsPage() {
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">

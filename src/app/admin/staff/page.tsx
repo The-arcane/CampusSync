@@ -1,8 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
+import { StaffTable } from './_components/staff-table';
+import { users } from '@/lib/mock-data';
+import type { Profile } from '@/lib/types';
 
 export default function ManageStaffPage() {
+  // Filter for teachers and non-teaching staff
+  const staff = users.filter(u => u.role === 'Teacher' || u.role === 'Security/Staff');
+
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">
@@ -16,12 +22,8 @@ export default function ManageStaffPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Staff List</CardTitle>
-          <CardDescription>A list of all teaching and non-teaching staff.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>Staff data table will be displayed here.</p>
+        <CardContent className='pt-6'>
+          <StaffTable data={staff as (Profile & {email: string})[]} />
         </CardContent>
       </Card>
     </div>
