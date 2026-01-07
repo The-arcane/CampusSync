@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
+import { StudentTable } from './_components/student-table';
+import { students } from '@/lib/mock-data';
 
 export default function ManageStudentsPage() {
   return (
@@ -21,7 +23,7 @@ export default function ManageStudentsPage() {
           <CardDescription>A list of all students currently enrolled.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Student data table will be displayed here.</p>
+          <StudentTable data={students} />
         </CardContent>
       </Card>
     </div>
