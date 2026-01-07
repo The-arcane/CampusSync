@@ -68,6 +68,7 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Login Failed",
         description: "Could not retrieve user profile. Please contact support.",
       });
+      await supabase.auth.signOut();
       return;
     }
 
@@ -81,11 +82,11 @@ export function LoginForm({ role }: { role: Role }) {
         title: "Access Denied",
         description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
+       await supabase.auth.signOut();
       return;
     }
     
     // Step 4: Role matches. Redirect to the correct dashboard.
-    // Use the role from the profile for the redirect to ensure correctness.
     const targetRole = profile.role as Role;
     switch (targetRole) {
         case 'super_admin':
@@ -147,7 +148,7 @@ export function LoginForm({ role }: { role: Role }) {
             <Button type="submit" className="w-full" size="lg" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Signing In...' : (
                 <>
-                  <LogIn />
+                  <LogIn className="mr-2 h-4 w-4" />
                   Sign In
                 </>
               )}
