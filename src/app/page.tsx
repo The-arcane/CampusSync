@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const { rawUser, loading } = useRole();
+  const { rawUser, loading, role } = useRole();
   const router = useRouter();
 
   useEffect(() => {
@@ -23,8 +23,11 @@ export default function Home() {
   // Render a loading state or nothing while checking auth state
   if(loading || rawUser) {
     return (
-       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        {role && (
+            <p className="text-muted-foreground">Loading {role} Portal...</p>
+        )}
       </div>
     )
   }
