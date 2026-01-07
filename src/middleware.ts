@@ -31,7 +31,7 @@ export async function middleware(req: NextRequest) {
 
   // If user is not logged in and not trying to access a login page, redirect to the main login selector.
   if (!session) {
-      if (path === '/login' || path === '/unauthorized' || isLoginPage) {
+      if (path === '/login' || path.startsWith('/unauthorized') || path.startsWith('/super-admin/login') || path.startsWith('/admin/login') || path.startsWith('/teacher/login') || path.startsWith('/security/login') || path.startsWith('/parent/login')) {
           return res;
       }
       return NextResponse.redirect(new URL('/login', req.url));
