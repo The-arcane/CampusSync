@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -72,18 +72,22 @@ export function LoginForm({ role }: { role: Role }) {
     }
 
     // Step 3: Check if the fetched role matches the selected role for portal access
-    if (profile.role !== role) {
+    // For super_admin, allow access to admin portal as well.
+    const isSuperAdminAccessingAdmin = role === 'admin' && profile.role === 'super_admin';
+
+    if (profile.role !== role && !isSuperAdminAccessingAdmin) {
       toast({
         variant: "destructive",
         title: "Access Denied",
         description: `You do not have permission to access the ${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} portal.`,
       });
-      await supabase.auth.signOut();
       return;
     }
     
     // Step 4: Role matches. Redirect to the correct dashboard.
-    switch (profile.role) {
+    // Use the role from the profile for the redirect to ensure correctness.
+    const targetRole = profile.role as Role;
+    switch (targetRole) {
         case 'super_admin':
             router.replace('/super-admin/dashboard');
             break;
@@ -105,7 +109,7 @@ export function LoginForm({ role }: { role: Role }) {
   }
 
   return (
-    <>
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle className="font-headline text-2xl capitalize">
           Login as <span className="text-primary">{role.replace(/_/g, ' ')}</span>
@@ -151,6 +155,6 @@ export function LoginForm({ role }: { role: Role }) {
           </form>
         </Form>
       </CardContent>
-    </>
+    </Card>
   );
 }

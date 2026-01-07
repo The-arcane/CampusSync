@@ -27,10 +27,11 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession();
   
   const path = req.nextUrl.pathname;
+  const isLoginPage = path.endsWith('/login');
 
-  // If user is not logged in, and not on the login/unauthorized page, redirect to login.
+  // If user is not logged in and not trying to access a login page, redirect to the main login selector.
   if (!session) {
-      if (path === '/login' || path === '/unauthorized') {
+      if (path === '/login' || path === '/unauthorized' || isLoginPage) {
           return res;
       }
       return NextResponse.redirect(new URL('/login', req.url));
@@ -59,8 +60,8 @@ export async function middleware(req: NextRequest) {
     'parent': '/parent/dashboard',
   };
 
-  // If a logged-in user tries to access the login page, redirect them to their dashboard
-  if (path === '/login') {
+  // If a logged-in user tries to access any login page, redirect them to their dashboard.
+  if (isLoginPage) {
     const dashboardUrl = roleRedirectMap[userRole] || '/login';
     return NextResponse.redirect(new URL(dashboardUrl, req.url));
   }
@@ -76,7 +77,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   
-  // Allow Super Admin to access Admin routes.
   if (path.startsWith('/admin') && userRole !== 'admin' && userRole !== 'super_admin') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
@@ -85,7 +85,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
   
-  // The route is /security, not /security-staff
   if (path.startsWith('/security') && userRole !== 'security_staff') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }

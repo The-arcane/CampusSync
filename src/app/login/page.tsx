@@ -1,93 +1,47 @@
 
 'use client';
-import Image from 'next/image';
-import { LoginForm } from '@/components/auth/login-form';
-import { ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
-import placeholderImages from '@/lib/placeholder-images.json';
-import { useState, useEffect } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
+import { ShieldCheck, UserCog, Briefcase, User, GraduationCap, BookOpenCheck } from 'lucide-react';
 import type { Role } from '@/lib/types';
-import { Card } from '@/components/ui/card';
-import { BookOpenCheck } from 'lucide-react';
-import { useRole } from '@/hooks/use-role';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
-const roleIcons: Record<Role, React.ElementType> = {
-  'super_admin': ShieldCheck,
-  'admin': UserCog,
-  'teacher': Briefcase,
-  'security_staff': User,
-  'parent': GraduationCap,
-};
-
-const roleLabels: Record<Role, string> = {
-  'super_admin': 'Super Admin',
-  'admin': 'Admin',
-  'teacher': 'Teacher',
-  'security_staff': 'Security/Staff',
-  'parent': 'Parent',
-};
+const roles: { role: Role; icon: React.ElementType; label: string; href: string }[] = [
+  { role: 'super_admin', icon: ShieldCheck, label: 'Super Admin', href: '/super-admin/login' },
+  { role: 'admin', icon: UserCog, label: 'Admin', href: '/admin/login' },
+  { role: 'teacher', icon: Briefcase, label: 'Teacher', href: '/teacher/login' },
+  { role: 'security_staff', icon: User, label: 'Security/Staff', href: '/security/login' },
+  { role: 'parent', icon: GraduationCap, label: 'Parent', href: '/parent/login' },
+];
 
 export default function LoginPage() {
-  const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
-  const [selectedRole, setSelectedRole] = useState<Role>('super_admin');
-  const { user, loading } = useRole();
-  
-  // The middleware now handles all redirection logic for logged-in users.
-  // This page can simply show a loading state if the auth state isn't clear yet.
-  if (loading || user) {
-    return (
-       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-8">
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+      <div className="w-full max-w-md mx-auto">
+        <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-3 mb-4">
               <BookOpenCheck className="h-10 w-10 text-primary" />
               <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter text-primary">
                 CampusSync
               </h1>
             </div>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-md">
-              Streamlining school management for a connected and efficient
-              educational experience.
+            <p className="text-lg text-muted-foreground mb-8">
+              Please select your role to sign in.
             </p>
-            <Card className="w-full max-w-sm">
-                <Tabs value={selectedRole} onValueChange={(value) => setSelectedRole(value as Role)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto flex-wrap justify-center mb-4">
-                    {(Object.keys(roleIcons) as Role[]).map(role => {
-                       const Icon = roleIcons[role];
-                       return (
-                         <TabsTrigger key={role} value={role} className="flex-col h-14 md:h-16 gap-1.5 text-xs md:text-sm">
-                            <Icon className="h-4 w-4 md:h-5 md:w-5"/>
-                            <span className="hidden md:inline">{roleLabels[role]}</span>
-                         </TabsTrigger>
-                       )
-                    })}
-                  </TabsList>
-                 <LoginForm role={selectedRole} />
-                </Tabs>
+            <Card className="w-full">
+                <CardContent className="p-6">
+                    <div className="grid grid-cols-1 gap-4">
+                        {roles.map(({ label, href, icon: Icon }) => (
+                            <Button asChild key={href} size="lg" variant="outline">
+                                <Link href={href}>
+                                    <Icon className="mr-2 h-5 w-5" />
+                                    <span>Login as {label}</span>
+                                </Link>
+                            </Button>
+                        ))}
+                    </div>
+                </CardContent>
             </Card>
-          </div>
-          <div className="hidden md:block">
-            {heroImage && (
-              <Image
-                src={heroImage.imageUrl}
-                alt={heroImage.description}
-                width={600}
-                height={400}
-                className="rounded-lg shadow-2xl object-cover"
-                data-ai-hint={heroImage.imageHint}
-                priority
-              />
-            )}
-          </div>
         </div>
       </div>
     </main>
