@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, useMemo, ReactNode, useEffect } from 'react';
 import type { Role, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
 type RoleContextType = {
   role: Role | null;
@@ -22,8 +22,6 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This listener handles auth state changes and fetches the user profile.
-    // Redirection logic is now handled entirely by the middleware.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setLoading(true);
       if (session?.user) {
@@ -39,15 +37,12 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           setUser(fullUser);
           setRoleState(profile.role);
         } else {
-          // Profile not found, clear user state.
-          // The middleware will catch this and redirect to login.
           setUser(null);
           setRoleState(null);
           setRawUser(null);
           await supabase.auth.signOut();
         }
       } else {
-        // No session, clear all user state.
         setUser(null);
         setRoleState(null);
         setRawUser(null);
