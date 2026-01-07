@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -27,7 +27,7 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-export function LoginForm() {
+export function LoginForm({ role }: { role: Role }) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -40,6 +40,7 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Step 1: Authenticate with email and password
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
@@ -53,16 +54,47 @@ export function LoginForm() {
       });
       return;
     }
+
+    // Step 2: Verify the user's role from the profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Could not retrieve user profile. Please contact support.",
+      });
+      // Also sign the user out to be safe
+      await supabase.auth.signOut();
+      return;
+    }
+
+    // Step 3: Check if the fetched role matches the selected role
+    if (profile.role !== role) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: `You do not have permission to access the ${role} portal.`,
+      });
+      await supabase.auth.signOut();
+      return;
+    }
     
-    // After successful login, redirect to the root page.
+    // After successful login and role verification, redirect to the root page.
     // The root page will then handle redirecting to the correct dashboard.
     router.push('/');
   }
 
   return (
-    <Card className="w-full">
+    <>
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Secure Login</CardTitle>
+        <CardTitle className="font-headline text-2xl">
+          Login as <span className="text-primary">{role}</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -104,6 +136,6 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-    </Card>
+    </>
   );
 }

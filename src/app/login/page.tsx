@@ -2,16 +2,28 @@
 'use client';
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
-import { BookOpenCheck } from 'lucide-react';
+import { BookOpenCheck, ShieldCheck, UserCog, Briefcase, User, GraduationCap } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Role } from '@/lib/types';
+import { Card } from '@/components/ui/card';
+
+const roleIcons: Record<Role, React.ElementType> = {
+  'Super Admin': ShieldCheck,
+  'Admin': UserCog,
+  'Teacher': Briefcase,
+  'Security/Staff': User,
+  'Parent': GraduationCap,
+};
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const { rawUser, loading } = useRole();
   const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<Role>('Super Admin');
 
   useEffect(() => {
     // If the user is already logged in, redirect them to the home page,
@@ -20,7 +32,7 @@ export default function LoginPage() {
       router.replace('/');
     }
   }, [rawUser, loading, router]);
-  
+
   // While checking auth state, or if the user is already logged in and we are redirecting,
   // show a loading indicator.
   if (loading || rawUser) {
@@ -48,9 +60,22 @@ export default function LoginPage() {
               Streamlining school management for a connected and efficient
               educational experience.
             </p>
-            <div className="w-full max-w-sm">
-              <LoginForm />
-            </div>
+            <Card className="w-full max-w-sm">
+                <Tabs value={selectedRole} onValueChange={(value) => setSelectedRole(value as Role)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto flex-wrap justify-center mb-4">
+                    {(Object.keys(roleIcons) as Role[]).map(role => {
+                       const Icon = roleIcons[role];
+                       return (
+                         <TabsTrigger key={role} value={role} className="flex-col h-14 md:h-16 gap-1.5 text-xs md:text-sm">
+                            <Icon className="h-4 w-4 md:h-5 md:w-5"/>
+                            <span className="hidden md:inline">{role.replace('/', '/ ')}</span>
+                         </TabsTrigger>
+                       )
+                    })}
+                  </TabsList>
+                 <LoginForm role={selectedRole} />
+                </Tabs>
+            </Card>
           </div>
           <div className="hidden md:block">
             {heroImage && (
