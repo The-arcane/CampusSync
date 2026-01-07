@@ -5,16 +5,18 @@ import { LoginForm } from '@/components/auth/login-form';
 import { BookOpenCheck } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useRole } from '@/hooks/use-role';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const heroImage = placeholderImages.placeholderImages.find(p => p.id === "login-hero");
   const { rawUser, loading, role } = useRole();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (!loading && rawUser && role) {
+      setIsRedirecting(true);
       // User is already logged in, redirect to their dashboard
       switch (role) {
         case 'Super Admin':
@@ -34,12 +36,13 @@ export default function LoginPage() {
           break;
         default:
           // Stay on login page if role is unknown, just in case
+          setIsRedirecting(false);
           break;
       }
     }
   }, [rawUser, loading, router, role]);
   
-  if(loading || rawUser) {
+  if(loading || isRedirecting) {
     // Show a loading indicator while checking auth status or redirecting
     return (
        <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
@@ -47,6 +50,15 @@ export default function LoginPage() {
         {role && (
             <p className="text-muted-foreground">Loading {role} Portal...</p>
         )}
+      </div>
+    )
+  }
+  
+  // Don't render the login form if a user is logged in but the redirect hasn't happened yet.
+  if (rawUser) {
+    return (
+       <div className="flex min-h-screen flex-col items-center justify-center bg-background space-y-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     )
   }
