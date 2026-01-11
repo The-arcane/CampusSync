@@ -9,7 +9,6 @@ import {
   SidebarFooter,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Header } from '@/components/layout/header';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -24,8 +23,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <SidebarFooter />
           </Sidebar>
           <SidebarInset>
-            <Header />
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8">
               {children}
             </main>
           </SidebarInset>

@@ -9,8 +9,10 @@ import {
   SidebarFooter,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Header } from '@/components/layout/header';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { UserNav } from '@/components/auth/user-nav';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -21,11 +23,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <SidebarContent>
               <SidebarNav />
             </SidebarContent>
-            <SidebarFooter />
+            <SidebarFooter>
+              <UserNav />
+            </SidebarFooter>
           </Sidebar>
           <SidebarInset>
-            <Header />
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8">
               {children}
             </main>
           </SidebarInset>
