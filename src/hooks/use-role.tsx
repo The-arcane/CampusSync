@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, useMemo, ReactNode, useEffect } from 'react';
 import type { Role, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 type RoleContextType = {
   role: Role | null;
@@ -21,41 +21,30 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [rawUser, setRawUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            await handleAuthStateChange('SIGNED_IN', session);
-        } else {
-            setLoading(false);
-        }
-    };
-    
-    fetchSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleAuthStateChange = async (_event: string, session: import('@supabase/supabase-js').Session | null) => {
+  const handleAuthStateChange = async (event: string, session: Session | null) => {
     setLoading(true);
     if (session?.user) {
       setRawUser(session.user);
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (profile) {
-        const fullUser = { ...profile, email: session.user.email };
-        setUser(fullUser);
-        setRoleState(profile.role);
-      } else {
-        await supabase.auth.signOut();
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) throw error;
+
+        if (profile) {
+          const fullUser = { ...profile, email: session.user.email };
+          setUser(fullUser);
+          setRoleState(profile.role);
+        } else {
+          // This case might happen if a user is deleted from the db but the auth user still exists.
+          await supabase.auth.signOut();
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        await supabase.auth.signOut(); // Sign out on error to prevent inconsistent state
         setUser(null);
         setRoleState(null);
         setRawUser(null);
@@ -67,6 +56,26 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    // Immediately check for an existing session when the provider mounts.
+    // This handles the initial load and tab-switching scenarios.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        handleAuthStateChange('INITIAL_SESSION', session);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for all future auth state changes.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    return () => {
+      // Cleanup the subscription when the component unmounts.
+      subscription?.unsubscribe();
+    };
+  }, []);
   
   const value = useMemo(() => ({ role, user, rawUser, loading }), [role, user, rawUser, loading]);
 
