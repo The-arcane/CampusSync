@@ -22,38 +22,51 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setLoading(true);
-      if (session?.user) {
-        setRawUser(session.user);
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          const fullUser = { ...profile, email: session.user.email };
-          setUser(fullUser);
-          setRoleState(profile.role);
+    const fetchSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            await handleAuthStateChange('SIGNED_IN', session);
         } else {
-          setUser(null);
-          setRoleState(null);
-          setRawUser(null);
-          await supabase.auth.signOut();
+            setLoading(false);
         }
-      } else {
-        setUser(null);
-        setRoleState(null);
-        setRawUser(null);
-      }
-      setLoading(false);
-    });
+    };
+    
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
+
+  const handleAuthStateChange = async (_event: string, session: import('@supabase/supabase-js').Session | null) => {
+    setLoading(true);
+    if (session?.user) {
+      setRawUser(session.user);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        const fullUser = { ...profile, email: session.user.email };
+        setUser(fullUser);
+        setRoleState(profile.role);
+      } else {
+        await supabase.auth.signOut();
+        setUser(null);
+        setRoleState(null);
+        setRawUser(null);
+      }
+    } else {
+      setUser(null);
+      setRoleState(null);
+      setRawUser(null);
+    }
+    setLoading(false);
+  };
   
   const value = useMemo(() => ({ role, user, rawUser, loading }), [role, user, rawUser, loading]);
 
