@@ -22,7 +22,7 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-20 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-8 peer-data-[state=collapsed]:peer-data-[variant=inset]:md:left-[5rem] peer-data-[variant=inset]:md:left-[17rem] transition-[left] duration-200">
+    <header className="fixed top-0 left-0 right-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-8 peer-data-[state=collapsed]:peer-data-[variant=inset]:md:left-[5rem] peer-data-[variant=inset]:md:left-[17rem] transition-[left] duration-200">
       {isMobile && <SidebarTrigger />}
       
       <h1 className="text-lg font-semibold md:text-xl font-headline hidden md:block">{getTitle(pathname)}</h1>
