@@ -10,6 +10,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { UserNav } from '@/components/auth/user-nav';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,7 +21,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <SidebarContent>
               <SidebarNav />
             </SidebarContent>
-            <SidebarFooter />
+            <SidebarFooter>
+              <UserNav />
+            </SidebarFooter>
           </Sidebar>
           <SidebarInset>
             <main className="flex-1 overflow-y-auto p-4 md:p-8">
