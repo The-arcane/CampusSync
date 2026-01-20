@@ -9,18 +9,22 @@ export async function middleware(req: NextRequest) {
 
   const isSupabaseConfigured =
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('YOUR_SUPABASE_URL');
 
-  // If Supabase isn't configured, redirect to the setup page.
+  // Handle the case where Supabase is NOT configured.
   if (!isSupabaseConfigured) {
+    // If we are not on the setup page, redirect to it.
     if (path !== '/setup') {
       return NextResponse.redirect(new URL('/setup', req.url));
     }
-    return res; // Allow access to the setup page
+    // If we are on the setup page, allow access and do nothing else.
+    return res;
   }
 
-  // If Supabase is configured but the user is on the setup page, redirect away.
-  if (isSupabaseConfigured && path === '/setup') {
+  // If Supabase is configured but the user is trying to access the setup page,
+  // redirect them to the login page.
+  if (path === '/setup') {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
