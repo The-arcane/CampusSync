@@ -26,6 +26,8 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     if (session?.user) {
       setRawUser(session.user);
       try {
+        if (!supabase) throw new Error("Supabase client is not available.");
+        
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -39,12 +41,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           setUser(fullUser);
           setRoleState(profile.role);
         } else {
-          // This case might happen if a user is deleted from the db but the auth user still exists.
           await supabase.auth.signOut();
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
-        await supabase.auth.signOut(); // Sign out on error to prevent inconsistent state
+        supabase?.auth.signOut(); 
         setUser(null);
         setRoleState(null);
         setRawUser(null);
@@ -58,8 +59,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Immediately check for an existing session when the provider mounts.
-    // This handles the initial load and tab-switching scenarios.
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         handleAuthStateChange('INITIAL_SESSION', session);
@@ -68,11 +72,9 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for all future auth state changes.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
-      // Cleanup the subscription when the component unmounts.
       subscription?.unsubscribe();
     };
   }, []);

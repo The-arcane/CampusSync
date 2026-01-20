@@ -39,6 +39,16 @@ export function LoginForm({ role }: { role: Role }) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description:
+          "Supabase is not configured. Please complete the setup.",
+      });
+      return;
+    }
+
     // Step 1: Authenticate with email and password
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: values.email,
