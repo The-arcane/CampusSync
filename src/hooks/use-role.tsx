@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, useMemo, ReactNode, useEffect } from 'react';
 import type { Role, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
 type RoleContextType = {
   role: Role | null;
@@ -21,58 +21,51 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [rawUser, setRawUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const handleAuthStateChange = async (event: string, session: Session | null) => {
-    setLoading(true);
-    if (session?.user) {
-      setRawUser(session.user);
-      try {
-        if (!supabase) throw new Error("Supabase client is not available.");
-        
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (error) throw error;
-
-        if (profile) {
-          const fullUser = { ...profile, email: session.user.email };
-          setUser(fullUser);
-          setRoleState(profile.role);
-        } else {
-          await supabase.auth.signOut();
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        supabase?.auth.signOut(); 
-        setUser(null);
-        setRoleState(null);
-        setRawUser(null);
-      }
-    } else {
-      setUser(null);
-      setRoleState(null);
-      setRawUser(null);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return;
     }
+    
+    setLoading(true);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        handleAuthStateChange('INITIAL_SESSION', session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setRawUser(session.user);
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) throw error;
+          
+          if (profile) {
+            const fullUser = { ...profile, email: session.user.email };
+            setUser(fullUser);
+            setRoleState(profile.role as Role);
+          } else {
+            // If user exists in auth but not profiles, sign out
+            await supabase.auth.signOut();
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+          // Sign out on error to prevent inconsistent state
+          await supabase.auth.signOut();
+          setUser(null);
+          setRoleState(null);
+          setRawUser(null);
+        }
       } else {
-        setLoading(false);
+        // User is signed out
+        setUser(null);
+        setRoleState(null);
+        setRawUser(null);
       }
+      // The initial check is done (or a change happened), so stop loading.
+      setLoading(false);
     });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => {
       subscription?.unsubscribe();
