@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -47,10 +46,14 @@ export function LoginForm({ role }: { role: Role }) {
     });
 
     if (authError || !authData.user) {
+      let description = authError?.message || "Invalid credentials. Please try again.";
+      if (authError?.message.toLowerCase().includes("failed to fetch")) {
+        description = "Could not connect to the server. Please ensure your Supabase credentials in .env.local are correct.";
+      }
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: authError?.message || "Invalid credentials. Please try again.",
+        description: description,
       });
       return;
     }
