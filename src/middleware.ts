@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { Role } from '@/lib/types';
 
 function isValidSupabaseUrl(url: string | undefined): boolean {
-  if (!url) return false;
+  if (!url || url.includes('YOUR_SUPABASE_URL')) return false;
   try {
     const u = new URL(url);
     return u.protocol === 'http:' || u.protocol === 'https:';
@@ -17,9 +17,12 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const path = req.nextUrl.pathname;
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+
   const isSupabaseConfigured =
-    isValidSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+    isValidSupabaseUrl(supabaseUrl) && supabaseAnonKey && !supabaseAnonKey.includes('YOUR_SUPABASE_ANON_KEY');
+
 
   // Handle the case where Supabase is NOT configured.
   if (!isSupabaseConfigured) {
