@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -46,6 +47,7 @@ export function LoginForm({ role }: { role: Role }) {
         description:
           "Supabase is not configured. Please complete the setup.",
       });
+      router.push('/setup');
       return;
     }
 
@@ -99,27 +101,8 @@ export function LoginForm({ role }: { role: Role }) {
       return;
     }
     
-    // Step 4: Role matches. Redirect to the correct dashboard.
-    const targetRole = profile.role as Role;
-    switch (targetRole) {
-        case 'super_admin':
-            router.replace('/super-admin/dashboard');
-            break;
-        case 'admin':
-            router.replace('/admin/dashboard');
-            break;
-        case 'teacher':
-            router.replace('/teacher/dashboard');
-            break;
-        case 'security_staff':
-            router.replace('/security/dashboard');
-            break;
-        case 'parent':
-            router.replace('/parent/dashboard');
-            break;
-        default:
-            router.replace('/login');
-    }
+    // Step 4: Role matches. Redirect to let middleware handle routing.
+    router.replace('/');
   }
 
   return (
