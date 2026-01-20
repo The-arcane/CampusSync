@@ -27,44 +27,53 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       return;
     }
     
+    // Set loading to true initially. The `finally` block in the auth listener 
+    // will ensure it's set to false after the first check.
     setLoading(true);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setRawUser(session.user);
-        try {
+      try {
+        if (session?.user) {
+          setRawUser(session.user);
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
-          if (error) throw error;
-          
-          if (profile) {
+          if (error) {
+            // This can happen if RLS fails, network error, etc.
+            // The safest thing to do is sign out to prevent an inconsistent state.
+            console.error("Error fetching profile:", error.message);
+            await supabase.auth.signOut();
+          } else if (profile) {
             const fullUser = { ...profile, email: session.user.email };
             setUser(fullUser);
             setRoleState(profile.role as Role);
           } else {
-            // If user exists in auth but not profiles, sign out
+            // If a user exists in Supabase auth but not in our public.profiles table,
+            // it's an invalid state. Sign them out.
+            console.warn("User has a session but no profile. Signing out.");
             await supabase.auth.signOut();
           }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
-          // Sign out on error to prevent inconsistent state
-          await supabase.auth.signOut();
+        } else {
+          // This block runs if the user is signed out (session is null)
+          // or on initial load if there's no active session.
           setUser(null);
           setRoleState(null);
           setRawUser(null);
         }
-      } else {
-        // User is signed out
-        setUser(null);
-        setRoleState(null);
-        setRawUser(null);
+      } catch (e) {
+          // Catch any other unexpected errors during the process.
+          console.error("Unexpected error in onAuthStateChange:", e);
+          setUser(null);
+          setRoleState(null);
+          setRawUser(null);
+      } finally {
+        // This is crucial: it guarantees that loading is set to false
+        // after the initial auth check is complete, preventing a perpetual loading state.
+        setLoading(false);
       }
-      // The initial check is done (or a change happened), so stop loading.
-      setLoading(false);
     });
 
     return () => {
