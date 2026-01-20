@@ -7,15 +7,15 @@ import { users } from '@/lib/mock-data';
 import type { Profile } from '@/lib/types';
 
 export default function ManageStaffPage() {
-  // Filter for teachers and non-teaching staff
-  const staff = users.filter(u => u.role === 'teacher' || u.role === 'security_staff');
+  // Filter for non-teaching staff
+  const staff = users.filter(u => u.role === 'security_staff');
 
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">
         <div className='space-y-2'>
-            <h1 className="text-3xl font-bold font-headline">Manage Staff</h1>
-            <p className="text-muted-foreground">View, add, and manage all staff members.</p>
+            <h1 className="text-3xl font-bold font-headline">Manage Non-Teaching Staff</h1>
+            <p className="text-muted-foreground">View, add, and manage all non-teaching staff members.</p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" /> Add New Staff

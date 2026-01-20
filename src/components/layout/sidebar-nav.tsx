@@ -16,7 +16,8 @@ import {
   School,
   User,
   HeartHandshake,
-  BookOpenCheck
+  BookOpenCheck,
+  Briefcase,
 } from 'lucide-react';
 import { useRole } from '@/hooks/use-role';
 import type { Role } from '@/lib/types';
@@ -47,8 +48,12 @@ const navItemsByRole: Record<Role, NavItem[]> = {
   'admin': [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/students', icon: Users, label: 'Students' },
-    { href: '/admin/staff', icon: UserCheck, label: 'Staff' },
+    { href: '/admin/teachers', icon: UserCheck, label: 'Teachers' },
+    { href: '/admin/staff', icon: Briefcase, label: 'Non-Teaching Staff' },
+    { href: '/admin/classes', icon: School, label: 'Classes & Subjects' },
     { href: '/admin/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/admin/fees', icon: Wallet, label: 'Fees Management' },
+    { href: '/admin/reports', icon: BarChart, label: 'Reports' },
   ],
   'teacher': [
     { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

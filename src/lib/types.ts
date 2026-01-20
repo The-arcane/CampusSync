@@ -42,6 +42,8 @@ export type Class = {
   id: string; // UUID
   class_name: string;
   section?: string;
+  subjects?: Subject[];
+  student_count?: number;
 };
 
 export type Subject = {

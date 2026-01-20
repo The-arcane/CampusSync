@@ -1,5 +1,5 @@
 
-import type { Profile, Role, Student, Staff, Teacher } from './types';
+import type { Profile, Role, Student, Staff, Teacher, Class, Fee } from './types';
 import placeholderImages from './placeholder-images.json';
 
 const avatarUrls = [
@@ -16,6 +16,7 @@ export const users: (Profile & {email: string})[] = [
   { id: '3', full_name: 'Lena Petrova', email: 'lena.petrova@example.com', role: 'teacher', avatarUrl: avatarUrls[2] },
   { id: '4', full_name: 'John Smith', email: 'john.smith@example.com', role: 'security_staff', avatarUrl: avatarUrls[3] },
   { id: '5', full_name: 'Sarah Connor', email: 'sarah.connor@example.com', role: 'parent', avatarUrl: avatarUrls[4] },
+  { id: '6', full_name: 'David Chen', email: 'david.chen@example.com', role: 'teacher', avatarUrl: avatarUrls[1] },
 ];
 
 export const students: Student[] = [
@@ -28,10 +29,25 @@ export const students: Student[] = [
 
 export const teachers: Teacher[] = [
   { id: '3', salary_per_day: 500, joining_date: '2020-08-20' },
+  { id: '6', salary_per_day: 550, joining_date: '2021-01-15' },
 ];
 
 export const staff: Staff[] = [
     { id: '4', designation: 'Security Head', salary_per_day: 300, joining_date: '2019-02-11' },
+];
+
+export const classes: Class[] = [
+    { id: 'C01', class_name: '10', section: 'A', student_count: 30, subjects: [{id: 'S01', name: 'Math'}, {id: 'S02', name: 'Science'}] },
+    { id: 'C02', class_name: '10', section: 'B', student_count: 28, subjects: [{id: 'S01', name: 'Math'}, {id: 'S03', name: 'History'}] },
+    { id: 'C03', class_name: '11', section: 'A', student_count: 35, subjects: [{id: 'S04', name: 'Physics'}, {id: 'S05', name: 'Chemistry'}] },
+];
+
+export const fees: Fee[] = [
+    { id: 'F001', student_id: 'S001', amount: 5000, status: 'paid', due_date: '2024-07-10' },
+    { id: 'F002', student_id: 'S002', amount: 5000, status: 'pending', due_date: '2024-07-10' },
+    { id: 'F003', student_id: 'S003', amount: 5500, status: 'paid', due_date: '2024-07-10' },
+    { id: 'F004', student_id: 'S004', amount: 4500, status: 'pending', due_date: '2024-07-10' },
+    { id: 'F005', student_id: 'S005', amount: 6000, status: 'paid', due_date: '2024-07-10' },
 ];
 
 export const recentSignups = [
