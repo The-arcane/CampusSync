@@ -18,6 +18,9 @@ import {
   HeartHandshake,
   BookOpenCheck,
   Briefcase,
+  QrCode,
+  ClipboardEdit,
+  BookCopy,
 } from 'lucide-react';
 import { useRole } from '@/hooks/use-role';
 import type { Role } from '@/lib/types';
@@ -58,19 +61,22 @@ const navItemsByRole: Record<Role, NavItem[]> = {
   'teacher': [
     { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/teacher/my-classes', icon: School, label: 'My Classes' },
-    { href: '/teacher/attendance', icon: CalendarCheck, label: 'Take Attendance' },
-    { href: '/teacher/academics', icon: BookOpen, label: 'Academic Records' },
+    { href: '/teacher/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/teacher/academics', icon: BookCopy, label: 'Exams & Results' },
+    { href: '/teacher/students', icon: Users, label: 'Students' },
   ],
   'security_staff': [
     { href: '/security/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/security/scan-qr', icon: CalendarCheck, label: 'Log Attendance' },
-    { href: '/security/reports', icon: BarChart, label: 'Attendance Reports' },
+    { href: '/security/scan-qr', icon: QrCode, label: 'QR Attendance' },
+    { href: '/security/my-attendance', icon: CalendarCheck, label: 'My Attendance' },
+    { href: '/security/leave-requests', icon: ClipboardEdit, label: 'Leave Requests' },
   ],
   'parent': [
     { href: '/parent/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/parent/child-profile', icon: User, label: 'Child Profile' },
-    { href: '/parent/academics', icon: BookOpen, label: 'Academics' },
-    { href: '/parent/communication', icon: HeartHandshake, label: 'Teacher Communication' },
+    { href: '/parent/child-profile', icon: User, label: 'My Child' },
+    { href: '/parent/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/parent/academics', icon: BookCopy, label: 'Exams & Results' },
+    { href: '/parent/fees', icon: Wallet, label: 'Fees' },
   ],
 };
 
