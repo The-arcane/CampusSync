@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,10 +6,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
 import { QrCode, Video, Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function ScanQrPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
@@ -26,11 +27,10 @@ export default function ScanQrPage() {
     
     setIsStarting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      // Prefer environment-facing camera for QR scanning
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setStream(mediaStream);
       setHasCameraPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -45,14 +45,27 @@ export default function ScanQrPage() {
   };
 
   useEffect(() => {
-    // Cleanup function to stop camera stream when component unmounts
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      // The `play()` method returns a Promise. It's good practice to handle potential exceptions.
+      videoRef.current.play().catch(err => {
+        console.error("Error playing video:", err);
+        toast({
+            variant: 'destructive',
+            title: 'Playback Error',
+            description: 'Could not start the camera feed.',
+        });
+      });
+    }
+    
+    // IMPORTANT: Cleanup function to stop the camera stream
+    // when the component unmounts or the stream object changes.
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [stream, toast]);
 
   // Note: A real scan would involve a QR library. This is a placeholder action.
   const handleScan = () => {
@@ -75,14 +88,15 @@ export default function ScanQrPage() {
         <CardHeader>
           <CardTitle>QR Code Scanner</CardTitle>
           <CardDescription>
-            {hasCameraPermission ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
+            {hasCameraPermission && stream ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            {hasCameraPermission ? (
-                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-            ) : (
+            {/* The video element is always in the DOM, but hidden if no stream. 
+                playsInline is crucial for iOS Safari. */}
+            <video ref={videoRef} className={cn("w-full h-full object-cover", !stream && "hidden")} muted playsInline />
+            {!stream && (
                 <div className="text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
@@ -92,16 +106,16 @@ export default function ScanQrPage() {
           
           {hasCameraPermission === false && (
             <Alert variant="destructive">
-              <Video className="h-4 w-4" />
+              <Camera className="h-4 w-4" />
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
-                Please allow camera access in your browser settings to use the QR scanner.
+                You have denied camera access. Please allow camera access in your browser settings to use the QR scanner.
               </AlertDescription>
             </Alert>
           )}
 
            <div className="text-center">
-            {hasCameraPermission ? (
+            {stream ? (
                  <Button size="lg" onClick={handleScan}>
                     <QrCode className="mr-2 h-5 w-5" />
                     Scan Code

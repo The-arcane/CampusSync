@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -10,12 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useRole } from '@/hooks/use-role';
 import { supabase } from '@/lib/supabase';
 import type { Student } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export default function ScanAttendancePage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
@@ -32,11 +33,9 @@ export default function ScanAttendancePage() {
     
     setIsStarting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setStream(mediaStream);
       setHasCameraPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -51,14 +50,24 @@ export default function ScanAttendancePage() {
   };
 
   useEffect(() => {
-    // Cleanup function to stop camera stream when component unmounts
+    if (stream && videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(err => {
+            console.error("Error playing video:", err);
+            toast({
+                variant: 'destructive',
+                title: 'Playback Error',
+                description: 'Could not start the camera feed.',
+            });
+        });
+    }
+    // Cleanup function to stop camera stream when component unmounts or stream object changes
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
     };
-  }, []);
+  }, [stream, toast]);
 
   useEffect(() => {
     async function fetchTeacherStudents() {
@@ -104,33 +113,50 @@ export default function ScanAttendancePage() {
     try {
         const { data: existingRecord, error: checkError } = await supabase
             .from('student_attendance')
-            .select('id')
+            .select('id, check_in, check_out')
             .eq('student_id', studentId)
             .eq('date', today)
             .maybeSingle();
 
         if (checkError) throw checkError;
 
+        const currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
         if (existingRecord) {
-            toast({
-                title: 'Already Marked Present',
-                description: `${randomStudent.full_name} has already been marked as present today.`,
-            });
+            if (existingRecord.check_out) {
+                 toast({
+                    title: 'Already Checked Out',
+                    description: `${randomStudent.full_name} has already been marked and checked out for today.`,
+                });
+            } else {
+                 const { error: updateError } = await supabase
+                    .from('student_attendance')
+                    .update({ check_out: currentTime })
+                    .eq('id', existingRecord.id);
+
+                if (updateError) throw updateError;
+                 toast({
+                    variant: 'default',
+                    title: 'Checked Out!',
+                    description: `${randomStudent.full_name} has been successfully checked out.`,
+                });
+            }
         } else {
             const { error: insertError } = await supabase
                 .from('student_attendance')
                 .insert({
                     student_id: studentId,
                     date: today,
-                    status: 'Present'
+                    status: 'Present',
+                    check_in: currentTime,
                 });
             
             if (insertError) throw insertError;
             
             toast({
                 variant: 'default',
-                title: 'Attendance Marked!',
-                description: `${randomStudent.full_name} has been successfully marked as present.`,
+                title: 'Checked In!',
+                description: `${randomStudent.full_name} has been successfully checked in as present.`,
             });
         }
     } catch (error: any) {
@@ -159,14 +185,13 @@ export default function ScanAttendancePage() {
         <CardHeader>
           <CardTitle>Live Camera Feed</CardTitle>
           <CardDescription>
-            {hasCameraPermission ? "The actual QR code decoding is simulated. Clicking scan will mark a random student as present." : "Activate your camera to start."}
+            {hasCameraPermission ? "The actual QR code decoding is simulated. Clicking scan will check-in/out a random student." : "Activate your camera to start."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            {hasCameraPermission ? (
-                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-            ) : (
+            <video ref={videoRef} className={cn("w-full h-full object-cover", !stream && "hidden")} muted playsInline />
+            {!stream && (
                 <div className="text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
@@ -176,22 +201,22 @@ export default function ScanAttendancePage() {
           
           {hasCameraPermission === false && (
             <Alert variant="destructive">
-              <Video className="h-4 w-4" />
+              <Camera className="h-4 w-4" />
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
-                Please allow camera access in your browser to use the QR scanner.
+                You have denied camera access. Please allow camera access in your browser to use the QR scanner.
               </AlertDescription>
             </Alert>
           )}
 
            <div className="text-center">
-                {hasCameraPermission ? (
+                {stream ? (
                     <Button size="lg" onClick={handleScan} disabled={isScanning || userLoading || students.length === 0}>
                         {isScanning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
-                        {isScanning ? 'Scanning...' : 'Scan Code & Mark Present'}
+                        {isScanning ? 'Scanning...' : 'Scan & Mark Attendance'}
                     </Button>
                 ) : (
-                    <Button size="lg" onClick={requestCameraPermission} disabled={isStarting}>
+                    <Button size="lg" onClick={requestCameraPermission} disabled={isScanning}>
                         {isStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
                         {isStarting ? 'Starting Camera...' : 'Activate Camera'}
                     </Button>
