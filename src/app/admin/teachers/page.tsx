@@ -3,12 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { TeachersTable } from './_components/teachers-table';
-import { users } from '@/lib/mock-data';
+import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ManageTeachersPage() {
-  // Filter for teachers
-  const teachers = users.filter(u => u.role === 'teacher');
+export default async function ManageTeachersPage() {
+  noStore();
+  const { data: teachers } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'teacher');
 
   return (
     <div className="space-y-8">
@@ -24,7 +28,7 @@ export default function ManageTeachersPage() {
 
       <Card>
         <CardContent className='pt-6'>
-          <TeachersTable data={teachers as (Profile & {email: string})[]} />
+          <TeachersTable data={teachers as (Profile & {email: string})[] || []} />
         </CardContent>
       </Card>
     </div>

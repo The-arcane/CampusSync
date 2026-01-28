@@ -3,9 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { FeesTable } from './_components/fees-table';
-import { fees } from '@/lib/mock-data';
+import { supabase } from '@/lib/supabase';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ManageFeesPage() {
+export default async function ManageFeesPage() {
+  noStore();
+  const { data: fees } = await supabase.from('fees').select('*');
+
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">
@@ -20,7 +24,7 @@ export default function ManageFeesPage() {
 
       <Card>
         <CardContent className='pt-6'>
-          <FeesTable data={fees} />
+          <FeesTable data={fees || []} />
         </CardContent>
       </Card>
     </div>

@@ -3,9 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { ClassTable } from './_components/class-table';
-import { classes } from '@/lib/mock-data';
+import { supabase } from '@/lib/supabase';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ManageClassesPage() {
+export default async function ManageClassesPage() {
+  noStore();
+  const { data: classes } = await supabase.from('classes').select('*, students(count)');
+
+  const classData = classes?.map(c => ({
+    ...c,
+    student_count: c.students[0].count,
+    subjects: [] // Note: Subjects relationship needs to be handled if required by table
+  })) || [];
+
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">
@@ -20,7 +30,7 @@ export default function ManageClassesPage() {
 
       <Card>
         <CardContent className='pt-6'>
-          <ClassTable data={classes} />
+          <ClassTable data={classData} />
         </CardContent>
       </Card>
     </div>

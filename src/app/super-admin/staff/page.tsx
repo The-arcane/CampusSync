@@ -1,14 +1,18 @@
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { StaffTable } from './_components/staff-table';
-import { users } from '@/lib/mock-data';
+import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ManageStaffPage() {
-  // Filter for teachers and non-teaching staff
-  const staff = users.filter(u => u.role === 'teacher' || u.role === 'security_staff');
+export default async function ManageStaffPage() {
+  noStore();
+  const { data: staff } = await supabase
+    .from('profiles')
+    .select('*')
+    .in('role', ['teacher', 'security_staff', 'admin']);
 
   return (
     <div className="space-y-8">
@@ -24,7 +28,7 @@ export default function ManageStaffPage() {
 
       <Card>
         <CardContent className='pt-6'>
-          <StaffTable data={staff as (Profile & {email: string})[]} />
+          <StaffTable data={staff as (Profile & {email: string})[] || []} />
         </CardContent>
       </Card>
     </div>

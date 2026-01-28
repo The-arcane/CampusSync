@@ -11,10 +11,32 @@ import { StatCard } from '@/components/dashboard/stat-card';
 import { Users, UserCheck, Wallet, CalendarCheck } from 'lucide-react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { RecentSignups } from '@/components/dashboard/recent-signups';
-import { attendanceData } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function SuperAdminDashboardPage() {
+export default async function SuperAdminDashboardPage() {
+  noStore();
+
+  const { count: studentCount } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: staffCount } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .in('role', ['teacher', 'security_staff', 'admin']);
+  
+  const { data: recentSignups } = await supabase
+    .from('profiles')
+    .select('full_name, email, avatarUrl')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // TODO: Implement real attendance and fees data fetching
+  const attendanceToday = "92.5%";
+  const feesCollected = "$52,312";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between space-y-2">
@@ -37,28 +59,28 @@ export default function SuperAdminDashboardPage() {
         <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                title="Total Students"
-                value="1,204"
-                description="+20.1% from last month"
-                icon={Users}
+                  title="Total Students"
+                  value={studentCount?.toLocaleString() || '0'}
+                  description="All students in the system"
+                  icon={Users}
                 />
                 <StatCard
-                title="Active Staff"
-                value="82"
-                description="+18.1% from last month"
-                icon={UserCheck}
+                  title="Active Staff"
+                   value={staffCount?.toLocaleString() || '0'}
+                  description="All staff members"
+                  icon={UserCheck}
                 />
                 <StatCard
-                title="Attendance Today"
-                value="92.5%"
-                description="-1.4% from yesterday"
-                icon={CalendarCheck}
+                  title="Attendance Today"
+                  value={attendanceToday}
+                  description="-1.4% from yesterday"
+                  icon={CalendarCheck}
                 />
                 <StatCard
-                title="Fees Collected"
-                value="$52,312"
-                description="+19% from last month"
-                icon={Wallet}
+                  title="Fees Collected"
+                  value={feesCollected}
+                  description="+19% from last month"
+                  icon={Wallet}
                 />
             </div>
 
@@ -69,18 +91,18 @@ export default function SuperAdminDashboardPage() {
                     <CardDescription>Monthly attendance trends for students and staff.</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <OverviewChart data={attendanceData}/>
+                    <OverviewChart data={[]}/>
                 </CardContent>
                 </Card>
                 <Card className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle className='font-headline'>Recent Signups</CardTitle>
                     <CardDescription>
-                    You have 5 new student/staff signups this month.
+                      The latest 5 users to join the platform.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RecentSignups />
+                    <RecentSignups signups={recentSignups || []} />
                 </CardContent>
                 </Card>
             </div>
