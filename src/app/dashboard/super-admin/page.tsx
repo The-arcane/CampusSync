@@ -9,7 +9,6 @@ import { StatCard } from '@/components/dashboard/stat-card';
 import { Users, UserCheck, Wallet, CalendarCheck } from 'lucide-react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { RecentSignups } from '@/components/dashboard/recent-signups';
-import { attendanceData } from '@/lib/mock-data';
 
 export default function SuperAdminDashboardPage() {
   return (
@@ -48,7 +47,7 @@ export default function SuperAdminDashboardPage() {
             <CardDescription>Monthly attendance trends for students and staff.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
-            <OverviewChart data={attendanceData}/>
+            <OverviewChart data={[]}/>
           </CardContent>
         </Card>
         <Card className="lg:col-span-3">
@@ -59,7 +58,7 @@ export default function SuperAdminDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSignups />
+            <RecentSignups signups={[]} />
           </CardContent>
         </Card>
       </div>
