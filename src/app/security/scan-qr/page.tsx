@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -11,27 +11,31 @@ import { cn } from '@/lib/utils';
 export default function ScanQrPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isActivating, setIsActivating] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
-  const getCameraPermission = async () => {
+  const getCameraPermission = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Unsupported Browser',
         description: 'Camera access is not supported by your browser.',
       });
+      setHasCameraPermission(false);
       return;
     }
 
     setIsActivating(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      setHasCameraPermission(true);
+      streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setHasCameraPermission(true);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -44,32 +48,42 @@ export default function ScanQrPage() {
     } finally {
       setIsActivating(false);
     }
-  };
-
+  }, [toast]);
+  
   useEffect(() => {
-    // This effect is primarily for cleanup when the component unmounts.
-    const videoElement = videoRef.current;
     return () => {
-      if (videoElement && videoElement.srcObject) {
-        const stream = videoElement.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
-  const handleScan = () => {
+  const handleScan = useCallback(() => {
+    if (isScanning) return;
+    setIsScanning(true);
     toast({
-      title: 'Simulating Scan',
-      description: 'A real implementation would use a QR library to decode the stream.',
+      title: 'Scan Successful (Simulated)',
+      description: 'A student/staff QR code has been processed.',
     });
-  };
+    setTimeout(() => setIsScanning(false), 2000);
+  }, [isScanning, toast]);
+
+  useEffect(() => {
+    if (hasCameraPermission) {
+      const interval = setInterval(() => {
+        handleScan();
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [hasCameraPermission, handleScan]);
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div className='space-y-2'>
             <h1 className="text-3xl font-bold font-headline">Scan QR for Attendance</h1>
-            <p className="text-muted-foreground">Point the camera at a student or staff QR code to log their attendance.</p>
+            <p className="text-muted-foreground">Automatic scanning will start once the camera is active.</p>
         </div>
       </div>
 
@@ -77,7 +91,7 @@ export default function ScanQrPage() {
         <CardHeader>
           <CardTitle>QR Code Scanner</CardTitle>
           <CardDescription>
-            {hasCameraPermission ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
+            {hasCameraPermission ? "Scanning automatically. The scan itself is simulated." : "Activate your camera to start scanning."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,6 +108,14 @@ export default function ScanQrPage() {
                 <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
+                </div>
+            )}
+             {hasCameraPermission && (
+                <div className="absolute inset-0 flex items-center justify-center bg-transparent pointer-events-none">
+                    <div className="flex flex-col items-center gap-2 text-white bg-black/50 p-4 rounded-lg">
+                        {isScanning ? <Loader2 className="h-8 w-8 animate-spin" /> : <QrCode className="h-8 w-8" />}
+                        <p className="font-semibold text-sm">{isScanning ? 'Processing...' : 'Scanning for QR Code'}</p>
+                    </div>
                 </div>
             )}
              {isActivating && (
@@ -114,12 +136,7 @@ export default function ScanQrPage() {
           )}
 
            <div className="text-center">
-            {hasCameraPermission ? (
-                 <Button size="lg" onClick={handleScan}>
-                    <QrCode className="mr-2 h-5 w-5" />
-                    Scan Code
-                </Button>
-            ) : (
+            {!hasCameraPermission && (
                 <Button size="lg" onClick={getCameraPermission} disabled={isActivating}>
                     {isActivating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
                     {isActivating ? 'Starting Camera...' : 'Activate Camera'}

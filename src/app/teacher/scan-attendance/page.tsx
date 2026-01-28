@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -21,23 +21,14 @@ export default function ScanAttendancePage() {
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
   
-  useEffect(() => {
-    // Cleanup function to stop the camera stream when the component unmounts
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const getCameraPermission = async () => {
+  const getCameraPermission = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Unsupported Browser',
         description: 'Camera access is not supported by your browser.',
       });
+      setHasCameraPermission(false);
       return;
     }
 
@@ -45,11 +36,11 @@ export default function ScanAttendancePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
-      setHasCameraPermission(true);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
+        setHasCameraPermission(true);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -62,8 +53,16 @@ export default function ScanAttendancePage() {
     } finally {
       setIsActivating(false);
     }
-  };
+  }, [toast]);
 
+  useEffect(() => {
+    // Cleanup function to stop the camera stream when the component unmounts
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchTeacherStudents() {
@@ -90,14 +89,15 @@ export default function ScanAttendancePage() {
     if (!userLoading) fetchTeacherStudents();
   }, [user, userLoading]);
 
-  const handleScan = async () => {
-    setIsScanning(true);
-    toast({ title: 'Simulating Scan...', description: "Decoding QR from video feed." });
+  const handleScan = useCallback(async () => {
+    if (isScanning) return;
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsScanning(true);
     
-    if (students.length === 0) {
-      toast({ variant: 'destructive', title: 'No Students Found', description: 'Cannot simulate scan as no students are assigned to you.' });
+    // Simulate a scan attempt.
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (userLoading || students.length === 0) {
       setIsScanning(false);
       return;
     }
@@ -121,8 +121,8 @@ export default function ScanAttendancePage() {
         if (existingRecord) {
             if (existingRecord.check_out) {
                  toast({
-                    title: 'Already Checked Out',
-                    description: `${randomStudent.full_name} has already been marked and checked out for today.`,
+                    title: 'Already Scanned',
+                    description: `${randomStudent.full_name} has already checked in and out for today.`,
                 });
             } else {
                  const { error: updateError } = await supabase
@@ -163,9 +163,19 @@ export default function ScanAttendancePage() {
             description: error.message || 'Could not mark attendance.',
         });
     } finally {
-        setIsScanning(false);
+        setTimeout(() => setIsScanning(false), 2000); // Wait 2 seconds before allowing another scan
     }
-  };
+  }, [isScanning, students, toast, userLoading]);
+
+  useEffect(() => {
+    if (hasCameraPermission) {
+      const interval = setInterval(() => {
+        handleScan();
+      }, 3000); // Attempt a scan every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [hasCameraPermission, handleScan]);
 
 
   return (
@@ -173,7 +183,7 @@ export default function ScanAttendancePage() {
       <div className="flex items-center justify-between">
         <div className='space-y-2'>
             <h1 className="text-3xl font-bold font-headline">Scan Student Attendance</h1>
-            <p className="text-muted-foreground">Point the camera at a student's QR code to mark them present.</p>
+            <p className="text-muted-foreground">Automatic scanning will begin once the camera is active.</p>
         </div>
       </div>
 
@@ -181,53 +191,53 @@ export default function ScanAttendancePage() {
         <CardHeader>
           <CardTitle>Live Camera Feed</CardTitle>
           <CardDescription>
-            {hasCameraPermission ? "The actual QR code decoding is simulated. Clicking scan will check-in/out a random student." : "Activate your camera to start."}
+            {hasCameraPermission ? "Scanning for QR codes automatically. The scan itself is simulated." : "Activate your camera to start scanning."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className={cn("relative rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden", !hasCameraPermission && "hidden")}>
+           <div className="relative rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
              <video 
                 ref={videoRef} 
                 className="w-full h-full object-cover" 
                 playsInline
                 muted 
             />
-          </div>
-            
-          {hasCameraPermission === null && !isActivating && (
-            <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
+
+            {!hasCameraPermission && !isActivating && (
                 <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
                 </div>
-            </div>
-          )}
+            )}
+            
+            {hasCameraPermission && (
+                <div className="absolute inset-0 flex items-center justify-center bg-transparent pointer-events-none">
+                    <div className="flex flex-col items-center gap-2 text-white bg-black/50 p-4 rounded-lg">
+                        {isScanning ? <Loader2 className="h-8 w-8 animate-spin" /> : <QrCode className="h-8 w-8" />}
+                        <p className="font-semibold text-sm">{isScanning ? 'Processing...' : 'Scanning for QR Code'}</p>
+                    </div>
+                </div>
+            )}
 
-          {isActivating && (
-            <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
+            {isActivating && (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                     <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
-            </div>
-          )}
+            )}
+          </div>
           
           {hasCameraPermission === false && (
             <Alert variant="destructive">
               <Camera className="h-4 w-4" />
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
-                You have denied camera access. Please allow camera access in your browser to use the QR scanner.
+                You have denied camera access. Please allow camera access in your browser settings to use the QR scanner.
               </AlertDescription>
             </Alert>
           )}
 
            <div className="text-center">
-                {hasCameraPermission ? (
-                    <Button size="lg" onClick={handleScan} disabled={isScanning || userLoading || students.length === 0}>
-                        {isScanning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
-                        {isScanning ? 'Scanning...' : 'Scan & Mark Attendance'}
-                    </Button>
-                ) : (
+                {!hasCameraPermission && (
                     <Button size="lg" onClick={getCameraPermission} disabled={isActivating}>
                         {isActivating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
                         {isActivating ? 'Starting Camera...' : 'Activate Camera'}
