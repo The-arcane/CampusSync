@@ -52,16 +52,16 @@ const columns: ColumnDef<AttendanceRecord>[] = [
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => {
-      const status = row.getValue('status') as string;
+      const status = (row.getValue('status') as string) || '';
       return (
         <Badge
           className={cn({
-            'bg-green-500 text-white': status === 'Present',
-            'bg-red-500 text-white': status === 'Absent',
-            'bg-yellow-500 text-white': status === 'Late',
+            'bg-green-500 text-white': status.toLowerCase() === 'present',
+            'bg-red-500 text-white': status.toLowerCase() === 'absent',
+            'bg-yellow-500 text-white': status.toLowerCase() === 'late',
           })}
         >
-          {status}
+          {status ? status.charAt(0).toUpperCase() + status.slice(1) : ''}
         </Badge>
       );
     },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,18 @@ export default function ScanAttendancePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
+  
+  useEffect(() => {
+    // Cleanup function to stop the camera stream when the component unmounts
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -34,10 +44,12 @@ export default function ScanAttendancePage() {
     setIsActivating(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      streamRef.current = stream;
       setHasCameraPermission(true);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -51,16 +63,6 @@ export default function ScanAttendancePage() {
       setIsActivating(false);
     }
   };
-
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    return () => {
-      if (videoElement && videoElement.srcObject) {
-        const stream = videoElement.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
 
 
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function ScanAttendancePage() {
                 .insert({
                     student_id: studentId,
                     date: today,
-                    status: 'Present',
+                    status: 'present',
                     check_in: currentTime,
                 });
             
@@ -183,26 +185,31 @@ export default function ScanAttendancePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            <video 
+          <div className={cn("relative rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden", !hasCameraPermission && "hidden")}>
+             <video 
                 ref={videoRef} 
                 className="w-full h-full object-cover" 
-                autoPlay 
-                playsInline 
+                playsInline
                 muted 
             />
-            {!hasCameraPermission && !isActivating && (
-                 <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
+          </div>
+            
+          {hasCameraPermission === null && !isActivating && (
+            <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
+                <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
                 </div>
-            )}
-            {isActivating && (
+            </div>
+          )}
+
+          {isActivating && (
+            <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
                 <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                     <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
-            )}
-          </div>
+            </div>
+          )}
           
           {hasCameraPermission === false && (
             <Alert variant="destructive">
