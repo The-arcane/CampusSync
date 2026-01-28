@@ -1,149 +1,161 @@
--- This script seeds the database for the CampusSync application.
--- To use: Navigate to the SQL Editor in your Supabase dashboard, paste the
--- entire content of this file, and click "Run".
+-- This script is for seeding your Supabase database with sample data.
+-- 1. Go to your Supabase project's SQL Editor.
+-- 2. Paste the entire content of this file.
+-- 3. Run the query.
 
--- NOTE ON USERS: This script does NOT create users in `auth.users` because
--- passwords must be hashed. You must create users manually through the
--- Supabase Dashboard UI (Authentication -> Users -> Add User) or through
--- your application's sign-up form.
+-- Note: This script uses the user profile IDs you provided.
+-- Teacher ID: 64707f94-58a9-4843-a23a-035ce9f9d674 (teacher@prestige.com)
+-- Staff ID: 0770c322-4b80-445c-8ec4-7a923369ae91 (staff@prestige.com)
+-- Parent ID: 63cfca0d-de64-4593-91d4-4c5d02f7e618 (parent@prestige.com)
 
--- The `id` values for the profiles below are pre-generated UUIDs. You MUST
--- ensure that the user you create in `auth.users` has the EXACT same UUID.
--- When creating a user in the Supabase UI, you CANNOT specify a UUID.
--- A workaround is to sign up a new user through your app's login page,
--- then check the `auth.users` table for their generated UUID, and UPDATE
--- the corresponding profile row in this script with that UUID before running it.
+BEGIN;
 
--- Default password for all users if you sign them up is: password123
+-- Temporarily disable RLS on all public tables to allow seeding
+ALTER TABLE public.classes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subjects DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teachers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.parents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fees DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_results DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_attendance DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_attendance DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salary_records DISABLE ROW LEVEL SECURITY;
 
--- Clean up existing data in public tables to prevent conflicts.
--- The order is important due to foreign key constraints.
-DELETE FROM public.fees;
-DELETE FROM public.exam_results;
-DELETE FROM public.student_attendance;
-DELETE FROM public.staff_attendance;
-DELETE FROM public.leave_requests;
-DELETE FROM public.salary_records;
-DELETE FROM public.subjects;
-DELETE FROM public.students;
-DELETE FROM public.teachers;
-DELETE FROM public.staff;
-DELETE FROM public.parents;
-DELETE FROM public.classes;
-DELETE FROM public.profiles;
+-- Clear existing data to prevent conflicts if re-running the seed
+TRUNCATE TABLE public.classes, public.subjects, public.students, public.teachers, public.staff, public.parents, public.fees, public.exam_results, public.student_attendance, public.staff_attendance, public.leave_requests, public.salary_records RESTART IDENTITY CASCADE;
 
--- =============================================================================
--- 1. PROFILES (Users)
--- =============================================================================
--- Replace the `id` values with the UUIDs from your `auth.users` table.
-INSERT INTO public.profiles (id, full_name, role, email, avatarUrl) VALUES
-('a0a0a0a0-0000-0000-0000-000000000001', 'Super Admin', 'super_admin', 'superadmin@example.com', 'https://images.unsplash.com/photo-1521119989659-a83eee488004'),
-('a0a0a0a0-0000-0000-0000-000000000002', 'Admin User', 'admin', 'admin@example.com', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
-('a0a0a0a0-0000-0000-0000-000000000003', 'Maria Garcia (Teacher)', 'teacher', 'teacher.maria@example.com', 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a'),
-('a0a0a0a0-0000-0000-0000-000000000004', 'Chen Wei (Teacher)', 'teacher', 'teacher.chen@example.com', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
-('a0a0a0a0-0000-0000-0000-000000000005', 'Sanjay Patel (Teacher)', 'teacher', 'teacher.sanjay@example.com', 'https://images.unsplash.com/photo-1521119989659-a83eee488004'),
-('a0a0a0a0-0000-0000-0000-000000000006', 'David Miller (Security)', 'security_staff', 'staff.david@example.com', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
-('a0a0a0a0-0000-0000-0000-000000000007', 'Fatima Khan (Security)', 'security_staff', 'staff.fatima@example.com', 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a');
+-- Insert records for the provided user roles into their respective specific tables.
+-- The profiles table itself is NOT modified.
+INSERT INTO public.teachers (id, salary_per_day, joining_date) VALUES ('64707f94-58a9-4843-a23a-035ce9f9d674', 2000, '2022-04-01');
+INSERT INTO public.staff (id, designation, salary_per_day, joining_date) VALUES ('0770c322-4b80-445c-8ec4-7a923369ae91', 'Security Guard', 1500, '2021-08-15');
+INSERT INTO public.parents (id, address) VALUES ('63cfca0d-de64-4593-91d4-4c5d02f7e618', '123 Maple Street, Anytown, USA');
 
--- Parent Profiles (Generate 50)
-INSERT INTO public.profiles (id, full_name, role, email, avatarUrl)
-SELECT
-    gen_random_uuid(),
-    'Parent ' || (ROW_NUMBER() OVER ()) AS full_name,
-    'parent' AS role,
-    'parent' || (ROW_NUMBER() OVER ()) || '@example.com' AS email,
-    'https://images.unsplash.com/photo-1521119989659-a83eee488004'
-FROM generate_series(1, 50);
-
--- =============================================================================
--- 2. CLASSES
--- =============================================================================
-INSERT INTO public.classes (id, class_name, section) VALUES
-('c1a55001-0000-0000-0000-000000000001', '1', 'A'),
-('c1a55001-0000-0000-0000-000000000002', '1', 'B'),
-('c1a55001-0000-0000-0000-000000000003', '2', 'A'),
-('c1a55001-0000-0000-0000-000000000004', '2', 'B'),
-('c1a55001-0000-0000-0000-000000000005', '3', 'A'),
-('c1a55001-0000-0000-0000-000000000006', '3', 'B'),
-('c1a55001-0000-0000-0000-000000000007', '4', 'A'),
-('c1a55001-0000-0000-0000-000000000008', '4', 'B'),
-('c1a55001-0000-0000-0000-000000000009', '5', 'A'),
-('c1a55001-0000-0000-0000-000000000010', '5', 'B');
-
--- =============================================================================
--- 3. SUBJECTS
--- =============================================================================
-INSERT INTO public.subjects (id, name) VALUES
-('5b1e0001-0000-0000-0000-000000000001', 'Mathematics'),
-('5b1e0001-0000-0000-0000-000000000002', 'English Language'),
-('5b1e0001-0000-0000-0000-000000000003', 'Science'),
-('5b1e0001-0000-0000-0000-000000000004', 'History'),
-('5b1e0001-0000-0000-0000-000000000005', 'Geography'),
-('5b1e0001-0000-0000-0000-000000000006', 'Art & Design'),
-('5b1e0001-0000-0000-0000-000000000007', 'Physical Education'),
-('5b1e0001-0000-0000-0000-000000000008', 'Music'),
-('5b1e0001-0000-0000-0000-000000000009', 'Computer Science'),
-('5b1e0001-0000-0000-0000-000000000010', 'Biology');
-
--- =============================================================================
--- 4. STUDENTS
--- =============================================================================
--- This part is more complex as it links students to parents and classes.
--- We'll create 50 students and assign them to the 10 classes (5 students per class).
+-- Create Classes
+-- Using hardcoded UUIDs for deterministic linking
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DO $$
 DECLARE
-    parent_ids uuid[];
-    class_ids uuid[];
-    student_name text;
-    admission_counter int := 1;
+    class_10a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01';
+    class_10b_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d02';
+    class_9a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d03';
+    class_8a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d04';
 BEGIN
-    -- Get all parent and class UUIDs into arrays
-    SELECT array_agg(id) INTO parent_ids FROM public.profiles WHERE role = 'parent';
-    SELECT array_agg(id) INTO class_ids FROM public.classes;
+    INSERT INTO public.classes (id, class_name, section) VALUES
+    (class_10a_id, 'Grade 10', 'A'),
+    (class_10b_id, 'Grade 10', 'B'),
+    (class_9a_id, 'Grade 9', 'A'),
+    (class_8a_id, 'Grade 8', 'A');
+END $$;
 
-    -- Loop to insert 50 students
+
+-- Create Subjects and assign them to classes and the teacher
+-- The teacher ID is '64707f94-58a9-4843-a23a-035ce9f9d674'
+INSERT INTO public.subjects (id, name, class_id, teacher_id) VALUES
+(uuid_generate_v4(), 'Mathematics', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Physics', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Chemistry', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'English', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Mathematics', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d02', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Biology', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d02', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'History', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d03', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Geography', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d03', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Computer Science', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d04', '64707f94-58a9-4843-a23a-035ce9f9d674'),
+(uuid_generate_v4(), 'Physical Education', 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d04', '64707f94-58a9-4843-a23a-035ce9f9d674');
+
+-- Create Students
+-- All students are linked to the single parent ID '63cfca0d-de64-4593-91d4-4c5d02f7e618'
+DO $$
+DECLARE
+    class_10a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d01';
+    class_10b_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d02';
+    class_9a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d03';
+    class_8a_id UUID := 'd9f7b1e4-3a2b-4b1d-8c6c-8a1a9e7d0d04';
+    parent_id UUID := '63cfca0d-de64-4593-91d4-4c5d02f7e618';
+    first_names TEXT[] := ARRAY['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Saanvi', 'Aanya', 'Aadhya', 'Ananya', 'Pari', 'Diya', 'Myra', 'Anika', 'Aarohi', 'Siya'];
+    last_names TEXT[] := ARRAY['Sharma', 'Verma', 'Gupta', 'Singh', 'Kumar', 'Patel', 'Reddy', 'Khan', 'Jain', 'Shah'];
+    i INT;
+    f_name TEXT;
+    l_name TEXT;
+    adm_no INT;
+    class_id_to_use UUID;
+BEGIN
     FOR i IN 1..50 LOOP
-        student_name := 'Student ' || i;
-        INSERT INTO public.students (id, admission_no, full_name, class_id, parent_id)
+        f_name := first_names[1 + floor(random() * array_length(first_names, 1))];
+        l_name := last_names[1 + floor(random() * array_length(last_names, 1))];
+        adm_no := 2024000 + i;
+
+        -- Distribute students into classes
+        IF i <= 15 THEN
+            class_id_to_use := class_10a_id;
+        ELSIF i <= 30 THEN
+            class_id_to_use := class_10b_id;
+        ELSIF i <= 40 THEN
+            class_id_to_use := class_9a_id;
+        ELSE
+            class_id_to_use := class_8a_id;
+        END IF;
+
+        INSERT INTO public.students (id, admission_no, full_name, class_id, parent_id, qr_code)
+        VALUES (uuid_generate_v4(), adm_no::TEXT, f_name || ' ' || l_name, class_id_to_use, parent_id, 'QR-CODE-' || adm_no::TEXT);
+    END LOOP;
+END $$;
+
+-- Create Fee Records for a subset of students
+DO $$
+DECLARE
+    student_ids UUID[];
+    student_id_val UUID;
+BEGIN
+    -- Get IDs of 20 random students
+    SELECT ARRAY(SELECT id FROM public.students ORDER BY random() LIMIT 20) INTO student_ids;
+
+    FOREACH student_id_val IN ARRAY student_ids
+    LOOP
+        INSERT INTO public.fees (student_id, amount, status, due_date)
         VALUES (
-            gen_random_uuid(),
-            'A' || (2024000 + admission_counter),
-            student_name,
-            class_ids[( (i-1) / 5) + 1], -- Assigns 5 students to each class
-            parent_ids[i] -- Assigns a unique parent to each student
+            student_id_val,
+            5000 + floor(random() * 2000), -- Random fee amount
+            CASE WHEN random() > 0.3 THEN 'paid' ELSE 'pending' END, -- 70% paid, 30% pending
+            (CURRENT_DATE + (floor(random() * 60) - 30) * '1 day'::interval) -- Random due date within +/- 30 days
         );
-        admission_counter := admission_counter + 1;
+    END LOOP;
+END $$;
+
+-- Create Exam Results for a subset of students
+DO $$
+DECLARE
+    student_rec RECORD;
+    subject_rec RECORD;
+BEGIN
+    FOR student_rec IN SELECT id, class_id FROM public.students ORDER BY random() LIMIT 10 LOOP
+        FOR subject_rec IN SELECT id FROM public.subjects WHERE subjects.class_id = student_rec.class_id LOOP
+             INSERT INTO public.exam_results (student_id, subject_id, exam_name, marks)
+             VALUES (
+                 student_rec.id,
+                 subject_rec.id,
+                 'Mid-Term Exam',
+                 floor(random() * 60) + 40 -- Marks between 40 and 100
+             );
+        END LOOP;
     END LOOP;
 END $$;
 
 
--- =============================================================================
--- 5. FEES
--- =============================================================================
-INSERT INTO public.fees (student_id, amount, status, due_date)
-SELECT
-    s.id,
-    4500 + (CAST(c.class_name AS integer) * 100),
-    CASE WHEN (ROW_NUMBER() OVER (ORDER BY s.id)) % 4 = 0 THEN 'pending' ELSE 'paid' END,
-    '2024-08-10'::date
-FROM
-    public.students s
-JOIN
-    public.classes c ON s.class_id = c.id;
+-- Re-enable RLS on all tables
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.parents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salary_records ENABLE ROW LEVEL SECURITY;
 
--- =============================================================================
--- 6. TEACHERS and STAFF specific data
--- =============================================================================
-INSERT INTO public.teachers (id, salary_per_day, joining_date) VALUES
-('a0a0a0a0-0000-0000-0000-000000000003', 500, '2018-08-15'),
-('a0a0a0a0-0000-0000-0000-000000000004', 520, '2019-08-15'),
-('a0a0a0a0-0000-0000-0000-000000000005', 540, '2020-08-15');
-
-INSERT INTO public.staff (id, designation, salary_per_day, joining_date) VALUES
-('a0a0a0a0-0000-0000-0000-000000000006', 'Security Head', 300, '2017-03-20'),
-('a0a0a0a0-0000-0000-0000-000000000007', 'Security Officer', 310, '2018-03-20');
-
--- You can add more data for exam_results, attendance etc. as needed.
--- Example for an exam result:
--- INSERT INTO public.exam_results (student_id, subject_id, exam_name, marks)
--- VALUES ('<student_uuid>', '<subject_uuid>', 'Mid-Term Exam', 85);
+COMMIT;
