@@ -5,38 +5,62 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
-import { QrCode, Video } from 'lucide-react';
+import { QrCode, Video, Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ScanQrPage() {
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      if (typeof window !== 'undefined' && navigator.mediaDevices) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          setHasCameraPermission(true);
+  const requestCameraPermission = async () => {
+    if (typeof window === 'undefined' || !navigator.mediaDevices) {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported Browser',
+        description: 'Camera access is not supported by your browser.',
+      });
+      return;
+    }
+    
+    setIsStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use this feature.',
+      });
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
-          toast({
-            variant: 'destructive',
-            title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings to use this feature.',
-          });
-        }
+  useEffect(() => {
+    // Cleanup function to stop camera stream when component unmounts
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
       }
     };
+  }, []);
 
-    getCameraPermission();
-  }, [toast]);
+  // Note: A real scan would involve a QR library. This is a placeholder action.
+  const handleScan = () => {
+    toast({
+      title: 'Simulating Scan',
+      description: 'A real implementation would use a QR library to decode the stream.',
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -50,28 +74,44 @@ export default function ScanQrPage() {
       <Card>
         <CardHeader>
           <CardTitle>QR Code Scanner</CardTitle>
-          <CardDescription>The video feed from your camera will appear below.</CardDescription>
+          <CardDescription>
+            {hasCameraPermission ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+            {hasCameraPermission ? (
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+            ) : (
+                <div className="text-muted-foreground flex flex-col items-center gap-2">
+                    <Video className="h-10 w-10" />
+                    <p>Camera is not active.</p>
+                </div>
+            )}
           </div>
           
-          {!hasCameraPermission && (
+          {hasCameraPermission === false && (
             <Alert variant="destructive">
               <Video className="h-4 w-4" />
               <AlertTitle>Camera Access Required</AlertTitle>
               <AlertDescription>
-                Please allow camera access in your browser to use the QR scanner.
+                Please allow camera access in your browser settings to use the QR scanner.
               </AlertDescription>
             </Alert>
           )}
 
            <div className="text-center">
-                <Button size="lg">
+            {hasCameraPermission ? (
+                 <Button size="lg" onClick={handleScan}>
                     <QrCode className="mr-2 h-5 w-5" />
                     Scan Code
                 </Button>
+            ) : (
+                <Button size="lg" onClick={requestCameraPermission} disabled={isStarting}>
+                    {isStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
+                    {isStarting ? 'Starting Camera...' : 'Activate Camera'}
+                </Button>
+            )}
             </div>
         </CardContent>
       </Card>

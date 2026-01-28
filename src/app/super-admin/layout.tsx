@@ -8,11 +8,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarInset,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { UserNav } from '@/components/auth/user-nav';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -28,6 +27,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </SidebarFooter>
           </Sidebar>
           <SidebarInset>
+            <header className="sticky top-0 z-10 flex h-14 items-center justify-end gap-4 border-b bg-background px-4 md:hidden">
+              <SidebarTrigger />
+            </header>
             <main className="flex-1 overflow-y-auto p-4 md:p-8">
               {children}
             </main>

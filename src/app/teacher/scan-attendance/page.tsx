@@ -5,44 +5,60 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
-import { QrCode, Video, Loader2 } from 'lucide-react';
+import { QrCode, Video, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRole } from '@/hooks/use-role';
 import { supabase } from '@/lib/supabase';
 import type { Student } from '@/lib/types';
 
 export default function ScanAttendancePage() {
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      if (typeof window !== 'undefined' && navigator.mediaDevices) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          setHasCameraPermission(true);
+  const requestCameraPermission = async () => {
+    if (typeof window === 'undefined' || !navigator.mediaDevices) {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported Browser',
+        description: 'Camera access is not supported by your browser.',
+      });
+      return;
+    }
+    
+    setIsStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use this feature.',
+      });
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
-          toast({
-            variant: 'destructive',
-            title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings to use this feature.',
-          });
-        }
+  useEffect(() => {
+    // Cleanup function to stop camera stream when component unmounts
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
       }
     };
-
-    getCameraPermission();
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     async function fetchTeacherStudents() {
@@ -73,8 +89,6 @@ export default function ScanAttendancePage() {
     setIsScanning(true);
     toast({ title: 'Simulating Scan...', description: "Decoding QR from video feed." });
 
-    // In a real app, you would use a library like jsQR to decode the video stream.
-    // Since we can't add new libraries, we'll simulate the process.
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     if (students.length === 0) {
@@ -83,13 +97,11 @@ export default function ScanAttendancePage() {
       return;
     }
     
-    // 1. Simulate decoding a QR code to get a student ID
     const randomStudent = students[Math.floor(Math.random() * students.length)];
     const studentId = randomStudent.id; 
     const today = new Date().toISOString().split('T')[0];
     
     try {
-        // 2. Check if attendance for this student on this day already exists
         const { data: existingRecord, error: checkError } = await supabase
             .from('student_attendance')
             .select('id')
@@ -105,7 +117,6 @@ export default function ScanAttendancePage() {
                 description: `${randomStudent.full_name} has already been marked as present today.`,
             });
         } else {
-            // 3. Insert a new attendance record
             const { error: insertError } = await supabase
                 .from('student_attendance')
                 .insert({
@@ -147,7 +158,9 @@ export default function ScanAttendancePage() {
       <Card>
         <CardHeader>
           <CardTitle>Live Camera Feed</CardTitle>
-          <CardDescription>The actual QR code decoding is simulated. Clicking scan will mark a random student as present.</CardDescription>
+          <CardDescription>
+            {hasCameraPermission ? "The actual QR code decoding is simulated. Clicking scan will mark a random student as present." : "Activate your camera to start."}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
@@ -156,12 +169,12 @@ export default function ScanAttendancePage() {
             ) : (
                 <div className="text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
-                    <p>Camera is not available or permission denied.</p>
+                    <p>Camera is not active.</p>
                 </div>
             )}
           </div>
           
-          {!hasCameraPermission && (
+          {hasCameraPermission === false && (
             <Alert variant="destructive">
               <Video className="h-4 w-4" />
               <AlertTitle>Camera Access Required</AlertTitle>
@@ -172,10 +185,17 @@ export default function ScanAttendancePage() {
           )}
 
            <div className="text-center">
-                <Button size="lg" onClick={handleScan} disabled={isScanning || !hasCameraPermission || userLoading || students.length === 0}>
-                    {isScanning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
-                    {isScanning ? 'Scanning...' : 'Scan Code & Mark Present'}
-                </Button>
+                {hasCameraPermission ? (
+                    <Button size="lg" onClick={handleScan} disabled={isScanning || userLoading || students.length === 0}>
+                        {isScanning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
+                        {isScanning ? 'Scanning...' : 'Scan Code & Mark Present'}
+                    </Button>
+                ) : (
+                    <Button size="lg" onClick={requestCameraPermission} disabled={isStarting}>
+                        {isStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
+                        {isStarting ? 'Starting Camera...' : 'Activate Camera'}
+                    </Button>
+                )}
             </div>
         </CardContent>
       </Card>
