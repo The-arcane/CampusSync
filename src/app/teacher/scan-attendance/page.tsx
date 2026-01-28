@@ -13,16 +13,16 @@ import { cn } from '@/lib/utils';
 
 export default function ScanAttendancePage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
 
-  const requestCameraPermission = async () => {
-    if (typeof window === 'undefined' || !navigator.mediaDevices) {
+  const getCameraPermission = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Unsupported Browser',
@@ -30,12 +30,15 @@ export default function ScanAttendancePage() {
       });
       return;
     }
-    
-    setIsStarting(true);
+
+    setIsActivating(true);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      setStream(mediaStream);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setHasCameraPermission(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -45,29 +48,20 @@ export default function ScanAttendancePage() {
         description: 'Please enable camera permissions in your browser settings to use this feature.',
       });
     } finally {
-      setIsStarting(false);
+      setIsActivating(false);
     }
   };
 
   useEffect(() => {
-    if (stream && videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(err => {
-            console.error("Error playing video:", err);
-            toast({
-                variant: 'destructive',
-                title: 'Playback Error',
-                description: 'Could not start the camera feed.',
-            });
-        });
-    }
-    // Cleanup function to stop camera stream when component unmounts or stream object changes
+    const videoElement = videoRef.current;
     return () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
     };
-  }, [stream, toast]);
+  }, []);
+
 
   useEffect(() => {
     async function fetchTeacherStudents() {
@@ -189,12 +183,23 @@ export default function ScanAttendancePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            <video ref={videoRef} className={cn("w-full h-full object-cover", !stream && "hidden")} muted playsInline />
-            {!stream && (
-                <div className="text-muted-foreground flex flex-col items-center gap-2">
+          <div className="relative rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
+            <video 
+                ref={videoRef} 
+                className="w-full h-full object-cover" 
+                autoPlay 
+                playsInline 
+                muted 
+            />
+            {!hasCameraPermission && !isActivating && (
+                 <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
+                </div>
+            )}
+            {isActivating && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                    <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
             )}
           </div>
@@ -210,15 +215,15 @@ export default function ScanAttendancePage() {
           )}
 
            <div className="text-center">
-                {stream ? (
+                {hasCameraPermission ? (
                     <Button size="lg" onClick={handleScan} disabled={isScanning || userLoading || students.length === 0}>
                         {isScanning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
                         {isScanning ? 'Scanning...' : 'Scan & Mark Attendance'}
                     </Button>
                 ) : (
-                    <Button size="lg" onClick={requestCameraPermission} disabled={isScanning}>
-                        {isStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
-                        {isStarting ? 'Starting Camera...' : 'Activate Camera'}
+                    <Button size="lg" onClick={getCameraPermission} disabled={isActivating}>
+                        {isActivating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
+                        {isActivating ? 'Starting Camera...' : 'Activate Camera'}
                     </Button>
                 )}
             </div>

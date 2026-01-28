@@ -10,13 +10,13 @@ import { cn } from '@/lib/utils';
 
 export default function ScanQrPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  const requestCameraPermission = async () => {
-    if (typeof window === 'undefined' || !navigator.mediaDevices) {
+  const getCameraPermission = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Unsupported Browser',
@@ -24,13 +24,15 @@ export default function ScanQrPage() {
       });
       return;
     }
-    
-    setIsStarting(true);
+
+    setIsActivating(true);
     try {
-      // Prefer environment-facing camera for QR scanning
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      setStream(mediaStream);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setHasCameraPermission(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -40,40 +42,27 @@ export default function ScanQrPage() {
         description: 'Please enable camera permissions in your browser settings to use this feature.',
       });
     } finally {
-      setIsStarting(false);
+      setIsActivating(false);
     }
   };
 
   useEffect(() => {
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
-      // The `play()` method returns a Promise. It's good practice to handle potential exceptions.
-      videoRef.current.play().catch(err => {
-        console.error("Error playing video:", err);
-        toast({
-            variant: 'destructive',
-            title: 'Playback Error',
-            description: 'Could not start the camera feed.',
-        });
-      });
-    }
-    
-    // IMPORTANT: Cleanup function to stop the camera stream
-    // when the component unmounts or the stream object changes.
+    // This effect is primarily for cleanup when the component unmounts.
+    const videoElement = videoRef.current;
     return () => {
-      if (stream) {
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stream, toast]);
+  }, []);
 
-  // Note: A real scan would involve a QR library. This is a placeholder action.
   const handleScan = () => {
     toast({
       title: 'Simulating Scan',
       description: 'A real implementation would use a QR library to decode the stream.',
     });
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -88,18 +77,28 @@ export default function ScanQrPage() {
         <CardHeader>
           <CardTitle>QR Code Scanner</CardTitle>
           <CardDescription>
-            {hasCameraPermission && stream ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
+            {hasCameraPermission ? "The video feed from your camera will appear below." : "Activate your camera to start scanning."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden">
-            {/* The video element is always in the DOM, but hidden if no stream. 
-                playsInline is crucial for iOS Safari. */}
-            <video ref={videoRef} className={cn("w-full h-full object-cover", !stream && "hidden")} muted playsInline />
-            {!stream && (
-                <div className="text-muted-foreground flex flex-col items-center gap-2">
+          <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
+            <video 
+              ref={videoRef} 
+              className="w-full h-full object-cover" 
+              autoPlay 
+              playsInline 
+              muted 
+            />
+            
+            {!hasCameraPermission && !isActivating && (
+                <div className="absolute text-muted-foreground flex flex-col items-center gap-2">
                     <Video className="h-10 w-10" />
                     <p>Camera is not active.</p>
+                </div>
+            )}
+             {isActivating && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                    <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
             )}
           </div>
@@ -115,15 +114,15 @@ export default function ScanQrPage() {
           )}
 
            <div className="text-center">
-            {stream ? (
+            {hasCameraPermission ? (
                  <Button size="lg" onClick={handleScan}>
                     <QrCode className="mr-2 h-5 w-5" />
                     Scan Code
                 </Button>
             ) : (
-                <Button size="lg" onClick={requestCameraPermission} disabled={isStarting}>
-                    {isStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
-                    {isStarting ? 'Starting Camera...' : 'Activate Camera'}
+                <Button size="lg" onClick={getCameraPermission} disabled={isActivating}>
+                    {isActivating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
+                    {isActivating ? 'Starting Camera...' : 'Activate Camera'}
                 </Button>
             )}
             </div>
