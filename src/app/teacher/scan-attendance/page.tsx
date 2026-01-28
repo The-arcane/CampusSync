@@ -19,6 +19,7 @@ export default function ScanAttendancePage() {
   const [lastScan, setLastScan] = useState<{ studentName: string; status: string; success: boolean } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const html5QrCodeScannerRef = useRef<Html5Qrcode | null>(null);
+  const processingRef = useRef(false); // Ref to prevent re-entrancy
 
   const { toast } = useToast();
   const { user, loading: userLoading } = useRole();
@@ -49,9 +50,15 @@ export default function ScanAttendancePage() {
   }, [user, userLoading]);
 
   const onScanSuccess = useCallback(async (decodedText: string) => {
-    if (isProcessing) return;
+    if (processingRef.current) return;
+
+    processingRef.current = true;
     setIsProcessing(true);
     setLastScan(null);
+
+    if (html5QrCodeScannerRef.current && html5QrCodeScannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+      html5QrCodeScannerRef.current.pause(true);
+    }
 
     try {
       const student = students.find(s => s.qr_code === decodedText);
@@ -102,19 +109,15 @@ export default function ScanAttendancePage() {
       setLastScan({ studentName: 'Error', status: statusText, success: false });
       toast({ variant: 'destructive', title: statusText, description: error.message });
     } finally {
-        if (html5QrCodeScannerRef.current?.getState() === Html5QrcodeScannerState.SCANNING) {
-            html5QrCodeScannerRef.current.pause(true);
-            setTimeout(() => {
-                if (html5QrCodeScannerRef.current?.getState() === Html5QrcodeScannerState.PAUSED) {
-                    html5QrCodeScannerRef.current.resume();
-                }
-                setIsProcessing(false);
-            }, 2000);
-        } else {
+        setTimeout(() => {
+            if (html5QrCodeScannerRef.current && html5QrCodeScannerRef.current.getState() === Html5QrcodeScannerState.PAUSED) {
+                html5QrCodeScannerRef.current.resume();
+            }
             setIsProcessing(false);
-        }
+            processingRef.current = false;
+        }, 2000); // 2 second cooldown
     }
-  }, [isProcessing, students, toast]);
+  }, [students, toast]);
 
   const startScanner = useCallback(() => {
     if (!html5QrCodeScannerRef.current) {

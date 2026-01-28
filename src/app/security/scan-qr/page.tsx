@@ -16,6 +16,7 @@ export default function ScanQrPage() {
   const [lastScan, setLastScan] = useState<{ name: string; status: string; success: boolean } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const html5QrCodeScannerRef = useRef<Html5Qrcode | null>(null);
+  const processingRef = useRef(false); // Ref to prevent re-entrancy
 
   const { toast } = useToast();
 
@@ -60,9 +61,15 @@ export default function ScanQrPage() {
   }, []);
 
   const onScanSuccess = useCallback(async (decodedText: string) => {
-    if (isProcessing) return;
+    if (processingRef.current) return;
+    
+    processingRef.current = true;
     setIsProcessing(true);
     setLastScan(null);
+    
+    if (html5QrCodeScannerRef.current && html5QrCodeScannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+      html5QrCodeScannerRef.current.pause(true);
+    }
 
     try {
       const result = await handleAttendance(decodedText);
@@ -76,19 +83,15 @@ export default function ScanQrPage() {
       setLastScan({ name: 'Error', status: 'Database operation failed', success: false });
       toast({ variant: 'destructive', title: 'Database Error', description: error.message });
     } finally {
-        if (html5QrCodeScannerRef.current?.getState() === Html5QrcodeScannerState.SCANNING) {
-            html5QrCodeScannerRef.current.pause(true);
-            setTimeout(() => {
-                if (html5QrCodeScannerRef.current?.getState() === Html5QrcodeScannerState.PAUSED) {
-                    html5QrCodeScannerRef.current.resume();
-                }
-                setIsProcessing(false);
-            }, 2000);
-        } else {
+        setTimeout(() => {
+            if (html5QrCodeScannerRef.current && html5QrCodeScannerRef.current.getState() === Html5QrcodeScannerState.PAUSED) {
+                html5QrCodeScannerRef.current.resume();
+            }
             setIsProcessing(false);
-        }
+            processingRef.current = false;
+        }, 2000); // 2 second cooldown
     }
-  }, [isProcessing, toast, handleAttendance]);
+  }, [handleAttendance, toast]);
   
   const startScanner = useCallback(() => {
     if (!html5QrCodeScannerRef.current) {
