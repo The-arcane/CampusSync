@@ -53,20 +53,19 @@ export default function ScanAttendancePage() {
     setIsProcessing(true);
     setLastScan(null);
 
-    const student = students.find(s => s.qr_code === decodedText);
-
-    if (!student) {
-      const status = "Student not in your classes or invalid QR.";
-      setLastScan({ studentName: 'Unknown', status, success: false });
-      toast({ variant: 'destructive', title: 'Invalid Scan', description: status });
-      setIsProcessing(false);
-      return;
-    }
-    
-    const studentId = student.id;
-    const today = new Date().toISOString().split('T')[0];
-
     try {
+      const student = students.find(s => s.qr_code === decodedText);
+
+      if (!student) {
+        const status = "Student not in your classes or invalid QR.";
+        setLastScan({ studentName: 'Unknown', status, success: false });
+        toast({ variant: 'destructive', title: 'Invalid Scan', description: status });
+        return;
+      }
+      
+      const studentId = student.id;
+      const today = new Date().toISOString().split('T')[0];
+
       const { data: existingRecord, error: checkError } = await supabase
         .from('student_attendance')
         .select('id, check_in, check_out')
@@ -100,7 +99,7 @@ export default function ScanAttendancePage() {
     } catch (error: any) {
       console.error('Attendance marking error:', error);
       const statusText = 'Database Error';
-      setLastScan({ studentName: student.full_name, status: statusText, success: false });
+      setLastScan({ studentName: 'Error', status: statusText, success: false });
       toast({ variant: 'destructive', title: statusText, description: error.message });
     } finally {
         if (html5QrCodeScannerRef.current?.getState() === Html5QrcodeScannerState.SCANNING) {
