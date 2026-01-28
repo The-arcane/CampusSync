@@ -61,7 +61,8 @@ const navItemsByRole: Record<Role, NavItem[]> = {
   'teacher': [
     { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/teacher/my-classes', icon: School, label: 'My Classes' },
-    { href: '/teacher/attendance', icon: CalendarCheck, label: 'Attendance' },
+    { href: '/teacher/scan-attendance', icon: QrCode, label: 'Scan Attendance' },
+    { href: '/teacher/attendance', icon: CalendarCheck, label: 'Attendance Records' },
     { href: '/teacher/academics', icon: BookCopy, label: 'Exams & Results' },
     { href: '/teacher/students', icon: Users, label: 'Students' },
   ],
