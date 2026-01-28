@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 import type { Student } from '@/lib/types';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const QR_REGION_ID = "qr-reader-region";
 
@@ -18,6 +20,7 @@ export default function ScanAttendancePage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [lastScan, setLastScan] = useState<{ studentName: string; status: string; success: boolean } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanMode, setScanMode] = useState<'in' | 'out'>('in');
   const html5QrCodeScannerRef = useRef<Html5Qrcode | null>(null);
   const processingRef = useRef(false); // Ref to prevent re-entrancy
 
@@ -67,41 +70,53 @@ export default function ScanAttendancePage() {
         const status = "Student not in your classes or invalid QR.";
         setLastScan({ studentName: 'Unknown', status, success: false });
         toast({ variant: 'destructive', title: 'Invalid Scan', description: status });
-        return;
-      }
-      
-      const studentId = student.id;
-      const today = new Date().toISOString().split('T')[0];
-
-      const { data: existingRecord, error: checkError } = await supabase
-        .from('student_attendance')
-        .select('id, check_in, check_out')
-        .eq('student_id', studentId)
-        .eq('date', today)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      const currentTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      if (existingRecord) {
-        if (existingRecord.check_out) {
-          const statusText = `Already Checked In & Out`;
-          toast({ title: 'Attendance Marked', description: `${student.full_name} is already marked for today.` });
-          setLastScan({ studentName: student.full_name, status: statusText, success: true });
-        } else {
-          const { error: updateError } = await supabase.from('student_attendance').update({ check_out: currentTime }).eq('id', existingRecord.id);
-          if (updateError) throw updateError;
-          const statusText = `Checked Out at ${currentTime}`;
-          toast({ title: 'Checked Out!', description: `${student.full_name} has been successfully checked out.` });
-          setLastScan({ studentName: student.full_name, status: statusText, success: true });
-        }
+        // Early exit for invalid scans, but still run finally block
       } else {
-        const { error: insertError } = await supabase.from('student_attendance').insert({ student_id: studentId, date: today, status: 'present', check_in: currentTime });
-        if (insertError) throw insertError;
-        const statusText = `Checked In at ${currentTime}`;
-        toast({ title: 'Checked In!', description: `${student.full_name} has been successfully checked in as present.` });
-        setLastScan({ studentName: student.full_name, status: statusText, success: true });
+        const studentId = student.id;
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data: existingRecord, error: checkError } = await supabase
+          .from('student_attendance')
+          .select('id, check_in, check_out')
+          .eq('student_id', studentId)
+          .eq('date', today)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        const currentTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (scanMode === 'in') {
+          if (existingRecord) {
+              const statusText = `Already Checked In at ${existingRecord.check_in}`;
+              toast({ title: 'Attendance Already Marked', description: `${student.full_name} is already checked in.` });
+              setLastScan({ studentName: student.full_name, status: statusText, success: true });
+          } else {
+              const { error: insertError } = await supabase.from('student_attendance').insert({ student_id: studentId, date: today, status: 'present', check_in: currentTime });
+              if (insertError) throw insertError;
+              const statusText = `Checked In at ${currentTime}`;
+              toast({ title: 'Checked In!', description: `${student.full_name} has been successfully checked in as present.` });
+              setLastScan({ studentName: student.full_name, status: statusText, success: true });
+          }
+        } else { // scanMode === 'out'
+           if (existingRecord) {
+              if (existingRecord.check_out) {
+                  const statusText = `Already Checked Out at ${existingRecord.check_out}`;
+                   toast({ title: 'Attendance Already Marked', description: `${student.full_name} is already checked out.` });
+                  setLastScan({ studentName: student.full_name, status: statusText, success: true });
+              } else {
+                  const { error: updateError } = await supabase.from('student_attendance').update({ check_out: currentTime }).eq('id', existingRecord.id);
+                  if (updateError) throw updateError;
+                  const statusText = `Checked Out at ${currentTime}`;
+                  toast({ title: 'Checked Out!', description: `${student.full_name} has been successfully checked out.` });
+                  setLastScan({ studentName: student.full_name, status: statusText, success: true });
+              }
+           } else {
+              const statusText = `Cannot Check Out. No Check-in record found for today.`;
+              toast({ variant: 'destructive', title: 'Check-in Required', description: `${student.full_name} must be checked in first.` });
+              setLastScan({ studentName: student.full_name, status: statusText, success: false });
+           }
+        }
       }
     } catch (error: any) {
       console.error('Attendance marking error:', error);
@@ -117,7 +132,7 @@ export default function ScanAttendancePage() {
             processingRef.current = false;
         }, 2000); // 2 second cooldown
     }
-  }, [students, toast]);
+  }, [students, toast, scanMode]);
 
   const startScanner = useCallback(() => {
     if (!html5QrCodeScannerRef.current) {
@@ -167,9 +182,21 @@ export default function ScanAttendancePage() {
       <Card>
         <CardHeader>
           <CardTitle>Live Camera Scanner</CardTitle>
-          <CardDescription>{isScannerActive ? "Scanning is active." : "Activate camera to begin."}</CardDescription>
+          <CardDescription>{isScannerActive ? "Scanning is active." : "Select mode and activate camera to begin."}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-col items-center gap-4">
+            <RadioGroup defaultValue="in" onValueChange={(value: 'in' | 'out') => setScanMode(value)} className="flex items-center space-x-4 mb-4" disabled={isScannerActive}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="in" id="check-in" />
+                <Label htmlFor="check-in">Check In</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="out" id="check-out" />
+                <Label htmlFor="check-out">Check Out</Label>
+              </div>
+            </RadioGroup>
+          </div>
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
             <div id={QR_REGION_ID} className="w-full h-full" />
             {!isScannerActive && (

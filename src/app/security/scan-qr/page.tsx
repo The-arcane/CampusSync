@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const QR_REGION_ID = "qr-reader-region";
 
@@ -15,6 +17,7 @@ export default function ScanQrPage() {
   const [isScannerActive, setIsScannerActive] = useState(false);
   const [lastScan, setLastScan] = useState<{ name: string; status: string; success: boolean } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanMode, setScanMode] = useState<'in' | 'out'>('in');
   const html5QrCodeScannerRef = useRef<Html5Qrcode | null>(null);
   const processingRef = useRef(false); // Ref to prevent re-entrancy
 
@@ -41,16 +44,24 @@ export default function ScanQrPage() {
 
       const currentTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      if (existingRecord) {
-        if (existingRecord.check_out) {
-          return { name: student.full_name, status: `Already Checked In & Out`, success: true };
+      if (scanMode === 'in') {
+        if (existingRecord) {
+          return { name: student.full_name, status: `Already Checked In at ${existingRecord.check_in}`, success: true };
         } else {
-          await supabase.from('student_attendance').update({ check_out: currentTime }).eq('id', existingRecord.id);
-          return { name: student.full_name, status: `Checked Out at ${currentTime}`, success: true };
+          await supabase.from('student_attendance').insert({ student_id: student.id, date: new Date().toISOString().split('T')[0], status: 'present', check_in: currentTime });
+          return { name: student.full_name, status: `Checked In at ${currentTime}`, success: true };
         }
-      } else {
-        await supabase.from('student_attendance').insert({ student_id: student.id, date: new Date().toISOString().split('T')[0], status: 'present', check_in: currentTime });
-        return { name: student.full_name, status: `Checked In at ${currentTime}`, success: true };
+      } else { // scanMode === 'out'
+        if (existingRecord) {
+          if (existingRecord.check_out) {
+            return { name: student.full_name, status: `Already Checked Out at ${existingRecord.check_out}`, success: true };
+          } else {
+            await supabase.from('student_attendance').update({ check_out: currentTime }).eq('id', existingRecord.id);
+            return { name: student.full_name, status: `Checked Out at ${currentTime}`, success: true };
+          }
+        } else {
+          return { name: student.full_name, status: `Cannot Check Out. No Check-in record found for today.`, success: false };
+        }
       }
     }
 
@@ -58,7 +69,7 @@ export default function ScanQrPage() {
 
     return { name: 'Unknown', status: 'User not found', success: false };
 
-  }, []);
+  }, [scanMode]);
 
   const onScanSuccess = useCallback(async (decodedText: string) => {
     if (processingRef.current) return;
@@ -151,10 +162,22 @@ export default function ScanQrPage() {
         <CardHeader>
           <CardTitle>QR Code Scanner</CardTitle>
           <CardDescription>
-            {isScannerActive ? "Live scanning is active." : "Activate the camera to begin scanning."}
+            {isScannerActive ? "Live scanning is active." : "Select mode and activate the camera to begin scanning."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-col items-center gap-4">
+            <RadioGroup defaultValue="in" onValueChange={(value: 'in' | 'out') => setScanMode(value)} className="flex items-center space-x-4 mb-4" disabled={isScannerActive}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="in" id="check-in" />
+                <Label htmlFor="check-in">Check In</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="out" id="check-out" />
+                <Label htmlFor="check-out">Check Out</Label>
+              </div>
+            </RadioGroup>
+          </div>
           <div className="rounded-md border bg-muted aspect-video w-full max-w-2xl mx-auto flex items-center justify-center overflow-hidden relative">
             <div id={QR_REGION_ID} className="w-full h-full" />
              {!isScannerActive && (
